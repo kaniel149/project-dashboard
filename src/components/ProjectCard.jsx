@@ -1,6 +1,5 @@
 import { formatTimeAgo } from '../utils/time';
 
-// Detect if text is Hebrew
 function isHebrew(text) {
   return /[\u0590-\u05FF]/.test(text);
 }
@@ -10,15 +9,9 @@ function ProjectCard({ project, onClick }) {
   const hasRemainingTasks = project.remainingTasks?.length > 0;
 
   const getStatusColor = () => {
-    if (hasUncommitted) return 'bg-orange-500';
-    if (hasRemainingTasks) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
-
-  const getStatusGlow = () => {
-    if (hasUncommitted) return 'shadow-orange-500/50';
-    if (hasRemainingTasks) return 'shadow-yellow-500/50';
-    return 'shadow-green-500/50';
+    if (hasUncommitted) return 'from-orange-500 to-red-500';
+    if (hasRemainingTasks) return 'from-yellow-500 to-orange-500';
+    return 'from-green-500 to-emerald-500';
   };
 
   const commitMessage = project.lastCommit?.message || '';
@@ -27,59 +20,66 @@ function ProjectCard({ project, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="glass-card rounded-xl p-4 cursor-pointer hover:bg-white/10 border border-white/5 hover:border-white/15 transition-all group"
+      className="group relative bg-white/[0.03] hover:bg-white/[0.08] rounded-xl p-4 cursor-pointer border border-white/[0.06] hover:border-white/[0.12] transition-all duration-200"
     >
-      {/* Header: Name + Branch + Time */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className={`w-2.5 h-2.5 rounded-full ${getStatusColor()} shadow-lg ${getStatusGlow()}`} />
-          <span className="text-white font-medium text-base">{project.name}</span>
+      {/* Status indicator line */}
+      <div className={`absolute right-0 top-3 bottom-3 w-1 rounded-full bg-gradient-to-b ${getStatusColor()} opacity-80`} />
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3 pr-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center text-white/70 font-medium text-sm border border-white/10">
+            {project.name.substring(0, 2).toUpperCase()}
+          </div>
+          <div>
+            <div className="text-white font-medium">{project.name}</div>
+            <div className="text-white/30 text-xs">{project.branch}</div>
+          </div>
         </div>
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-white/40 bg-white/5 px-2 py-0.5 rounded">{project.branch}</span>
-          <span className="text-white/30">{formatTimeAgo(project.lastActivity)}</span>
+        <div className="text-white/25 text-xs">
+          {formatTimeAgo(project.lastActivity)}
         </div>
       </div>
 
       {/* Last Commit */}
       {commitMessage && (
         <p
-          className="text-white/50 text-sm mb-3 truncate"
+          className="text-white/40 text-sm mb-3 truncate pr-3"
           style={{ direction: messageDir, textAlign: messageDir === 'rtl' ? 'right' : 'left' }}
         >
-          "{commitMessage}"
+          {commitMessage}
         </p>
       )}
 
-      {/* Summary if exists */}
+      {/* Summary */}
       {project.summary && (
-        <p
-          className="text-white/70 text-sm mb-3 line-clamp-2 auto-dir"
+        <div
+          className="text-white/60 text-sm mb-3 line-clamp-2 pr-3 leading-relaxed"
           style={{ direction: isHebrew(project.summary) ? 'rtl' : 'ltr' }}
         >
-          💬 {project.summary}
-        </p>
+          {project.summary}
+        </div>
       )}
 
-      {/* Stats Row */}
-      <div className="flex items-center gap-4 text-xs">
-        {project.remainingTasks?.length > 0 && (
-          <span className="text-yellow-400/80 flex items-center gap-1">
-            <span>📋</span>
+      {/* Stats */}
+      <div className="flex items-center gap-3 text-xs pr-3">
+        {hasRemainingTasks && (
+          <div className="flex items-center gap-1.5 text-yellow-400/70 bg-yellow-500/10 px-2 py-1 rounded-md">
+            <div className="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
             <span>{project.remainingTasks.length} משימות</span>
-          </span>
+          </div>
         )}
         {hasUncommitted && (
-          <span className="text-orange-400/80 flex items-center gap-1">
-            <span>⚡</span>
+          <div className="flex items-center gap-1.5 text-orange-400/70 bg-orange-500/10 px-2 py-1 rounded-md">
+            <div className="w-1.5 h-1.5 rounded-full bg-orange-400"></div>
             <span>{project.uncommittedChanges} שינויים</span>
-          </span>
+          </div>
         )}
         {!hasRemainingTasks && !hasUncommitted && (
-          <span className="text-green-400/80 flex items-center gap-1">
-            <span>✓</span>
-            <span>הכל מעודכן</span>
-          </span>
+          <div className="flex items-center gap-1.5 text-green-400/70 bg-green-500/10 px-2 py-1 rounded-md">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
+            <span>מעודכן</span>
+          </div>
         )}
       </div>
     </div>

@@ -9,8 +9,8 @@ let isCollapsed = false;
 let watcher;
 
 const PROJECTS_DIR = path.join(process.env.HOME, 'Desktop', 'projects');
-const EXPANDED_WIDTH = 380;
-const EXPANDED_HEIGHT = 500;
+const EXPANDED_WIDTH = 420;
+const EXPANDED_HEIGHT = 550;
 const COLLAPSED_WIDTH = 60;
 const COLLAPSED_HEIGHT = 60;
 
