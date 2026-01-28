@@ -6,21 +6,30 @@ function Dashboard({ projects, onCollapse }) {
   const [expandedProject, setExpandedProject] = useState(null);
 
   return (
-    <div className="w-[420px] h-[550px] bg-glass rounded-2xl border border-glass-border flex flex-col overflow-hidden shadow-2xl">
-      {/* Draggable Header */}
-      <div className="drag-region flex items-center justify-between px-5 py-4 border-b border-white/10 bg-gradient-to-r from-white/5 to-transparent">
-        <h1 className="text-white font-semibold flex items-center gap-3 text-lg">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-sm">
+    <div className="w-[420px] h-[550px] bg-glass rounded-2xl border border-glass-border flex flex-col overflow-hidden shadow-2xl relative">
+      {/* Collapse button - absolutely positioned, outside drag region */}
+      <div
+        onClick={() => {
+          console.log('Minimize clicked');
+          onCollapse();
+        }}
+        style={{ WebkitAppRegion: 'no-drag' }}
+        className="absolute top-3 left-3 w-9 h-9 rounded-lg bg-white/10 hover:bg-red-500/80 text-white/60 hover:text-white transition-all flex items-center justify-center text-xl cursor-pointer z-50 select-none"
+      >
+        ×
+      </div>
+
+      {/* Header - draggable area */}
+      <div
+        className="flex items-center justify-center px-5 py-4 border-b border-white/10 bg-gradient-to-r from-white/5 to-transparent"
+        style={{ WebkitAppRegion: 'drag' }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-sm text-white font-bold">
             P
           </div>
-          <span>הפרויקטים שלי</span>
-        </h1>
-        <button
-          onClick={onCollapse}
-          className="no-drag w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all flex items-center justify-center text-lg"
-        >
-          –
-        </button>
+          <h1 className="text-white font-semibold text-lg">הפרויקטים שלי</h1>
+        </div>
       </div>
 
       {/* Project List */}

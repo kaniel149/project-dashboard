@@ -24,8 +24,11 @@ body {
   -webkit-app-region: drag;
 }
 
+.drag-region button,
+.drag-region a,
+.drag-region input,
 .no-drag {
-  -webkit-app-region: no-drag;
+  -webkit-app-region: no-drag !important;
 }
 
 /* Text direction detection */
