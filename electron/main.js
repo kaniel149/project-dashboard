@@ -1,9 +1,13 @@
 const { app, BrowserWindow, screen, ipcMain } = require('electron');
 const path = require('path');
+const { scanAllProjects } = require('./scanner');
+const { createWatcher } = require('./watcher');
 
 let mainWindow;
 let isCollapsed = false;
+let watcher;
 
+const PROJECTS_DIR = path.join(process.env.HOME, 'Desktop', 'projects');
 const EXPANDED_WIDTH = 380;
 const EXPANDED_HEIGHT = 500;
 const COLLAPSED_WIDTH = 60;
@@ -38,6 +42,22 @@ function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
+
+  // Initial scan
+  scanAndSend();
+
+  // Setup file watcher
+  watcher = createWatcher(PROJECTS_DIR, async (changedPaths) => {
+    console.log('Changes detected in:', changedPaths);
+    scanAndSend();
+  });
+}
+
+async function scanAndSend() {
+  const projects = await scanAllProjects(PROJECTS_DIR);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('projects-update', projects);
+  }
 }
 
 ipcMain.handle('toggle-collapse', () => {
@@ -57,9 +77,15 @@ ipcMain.handle('toggle-collapse', () => {
 });
 
 ipcMain.handle('get-collapsed-state', () => isCollapsed);
+ipcMain.handle('refresh-projects', scanAndSend);
 
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
+  if (watcher) watcher.close();
   if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
