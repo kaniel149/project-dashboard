@@ -6,12 +6,13 @@
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "build": "vite build && electron-builder",
-    "start": "electron ."
+    "start": "electron .",
+    "install-app": "bash scripts/install.sh",
+    "uninstall-app": "bash scripts/uninstall.sh"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "chokidar": "^5.0.0",
     "electron": "^40.0.0",
@@ -28,5 +29,17 @@
     "tailwindcss": "^4.1.18",
     "vite": "^7.3.1",
     "wait-on": "^9.0.3"
+  },
+  "build": {
+    "appId": "com.kaniel.project-dashboard",
+    "productName": "Project Dashboard",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": "dir"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ]
   }
 }
