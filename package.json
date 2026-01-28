@@ -4,7 +4,7 @@
   "description": "Desktop dashboard for tracking project status, Git activity, and tasks",
   "main": "electron/main.js",
   "scripts": {
-    "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "dev": "concurrently \"vite --port 5173 --strictPort\" \"wait-on http://localhost:5173 && electron .\"",
     "build": "vite build && electron-builder",
     "start": "electron .",
     "install-app": "bash scripts/install.sh",
