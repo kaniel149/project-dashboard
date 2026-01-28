@@ -25,7 +25,8 @@ function createWindow() {
     frame: false,
     alwaysOnTop: true,
     skipTaskbar: true,
-    resizable: false,
+    resizable: true,
+    movable: true,
     hasShadow: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -39,9 +40,15 @@ function createWindow() {
   const isDev = !app.isPackaged;
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+    mainWindow.focus();
+  });
 
   // Initial scan
   scanAndSend();

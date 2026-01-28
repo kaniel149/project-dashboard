@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --color-glass: rgba(30, 30, 30, 0.85);
-  --color-glass-light: rgba(255, 255, 255, 0.1);
+  --color-glass: rgba(20, 20, 25, 0.92);
+  --color-glass-light: rgba(255, 255, 255, 0.08);
+  --color-glass-border: rgba(255, 255, 255, 0.12);
 }
 
 * {
@@ -18,8 +19,25 @@ body {
   user-select: none;
 }
 
+/* Draggable header region */
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Text direction detection */
+.auto-dir {
+  direction: auto;
+  unicode-bidi: plaintext;
+  text-align: start;
+}
+
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -27,6 +45,21 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Glass effect enhancement */
+.glass-card {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
