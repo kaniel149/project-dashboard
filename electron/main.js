@@ -1,5 +1,6 @@
 const { app, BrowserWindow, screen, ipcMain } = require('electron');
 const path = require('path');
+const { exec } = require('child_process');
 const { scanAllProjects } = require('./scanner');
 const { createWatcher } = require('./watcher');
 
@@ -85,6 +86,15 @@ ipcMain.handle('toggle-collapse', () => {
 
 ipcMain.handle('get-collapsed-state', () => isCollapsed);
 ipcMain.handle('refresh-projects', scanAndSend);
+
+ipcMain.handle('open-terminal', (_, projectPath) => {
+  // Open Terminal.app in the project directory
+  exec(`open -a Terminal "${projectPath}"`, (err) => {
+    if (err) {
+      console.error('Failed to open terminal:', err);
+    }
+  });
+});
 
 app.whenReady().then(createWindow);
 
