@@ -1,19 +1,51 @@
-// Completely disable console output to prevent EPIPE errors
-console.log = () => {};
-console.error = () => {};
-console.warn = () => {};
-console.info = () => {};
+// Fix EPIPE errors when running without terminal (launched from Finder/Login Items)
+// This MUST be at the very top, before any requires
 
-// Suppress ALL errors (no terminal attached)
-process.stdout?.on?.('error', () => {});
-process.stderr?.on?.('error', () => {});
-process.on('uncaughtException', () => {});
+// Suppress all errors FIRST - before anything else can fail
+process.on('uncaughtException', (err) => {
+  // Silently ignore EPIPE errors and similar pipe/socket issues
+  if (err && (err.code === 'EPIPE' || err.code === 'ERR_STREAM_DESTROYED')) return;
+});
 process.on('unhandledRejection', () => {});
+
+// Safely check if we have a TTY
+let hasTTY = false;
+try {
+  hasTTY = process.stdout && process.stdout.isTTY;
+} catch (e) {
+  hasTTY = false;
+}
+
+// Completely replace stdout/stderr with no-op streams to prevent EPIPE
+if (!hasTTY) {
+  const { Writable } = require('stream');
+  const nullStream = new Writable({
+    write(chunk, encoding, callback) {
+      callback();
+    }
+  });
+
+  try {
+    process.stdout = nullStream;
+    process.stderr = nullStream;
+  } catch (e) {
+    // Can't replace streams, that's ok
+  }
+}
+
+// Override console methods - always do this to prevent any output
+const noop = () => {};
+console.log = noop;
+console.error = noop;
+console.warn = noop;
+console.info = noop;
+console.debug = noop;
+console.trace = noop;
 
 const { app, BrowserWindow, screen, ipcMain, dialog } = require('electron');
 
-// Disable Electron's error dialog and crash reports
-dialog.showErrorBox = () => {};
+// Prevent Electron from showing error dialogs
+dialog.showErrorBox = noop;
 app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors');
 app.commandLine.appendSwitch('no-sandbox');
 const path = require('path');
