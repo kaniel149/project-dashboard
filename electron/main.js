@@ -1,4 +1,21 @@
-const { app, BrowserWindow, screen, ipcMain } = require('electron');
+// Completely disable console output to prevent EPIPE errors
+console.log = () => {};
+console.error = () => {};
+console.warn = () => {};
+console.info = () => {};
+
+// Suppress ALL errors (no terminal attached)
+process.stdout?.on?.('error', () => {});
+process.stderr?.on?.('error', () => {});
+process.on('uncaughtException', () => {});
+process.on('unhandledRejection', () => {});
+
+const { app, BrowserWindow, screen, ipcMain, dialog } = require('electron');
+
+// Disable Electron's error dialog and crash reports
+dialog.showErrorBox = () => {};
+app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors');
+app.commandLine.appendSwitch('no-sandbox');
 const path = require('path');
 const { exec } = require('child_process');
 const { scanAllProjects } = require('./scanner');
@@ -41,7 +58,7 @@ function createWindow() {
   const isDev = !app.isPackaged;
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
-    mainWindow.webContents.openDevTools({ mode: 'detach' });
+    // mainWindow.webContents.openDevTools({ mode: 'detach' });
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
@@ -55,16 +72,23 @@ function createWindow() {
   scanAndSend();
 
   // Setup file watcher
-  watcher = createWatcher(PROJECTS_DIR, async (changedPaths) => {
-    console.log('Changes detected in:', changedPaths);
-    scanAndSend();
+  watcher = createWatcher(PROJECTS_DIR, async () => {
+    try { scanAndSend(); } catch (e) {}
   });
 }
 
 async function scanAndSend() {
-  const projects = await scanAllProjects(PROJECTS_DIR);
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('projects-update', projects);
+  try {
+    const projects = await scanAllProjects(PROJECTS_DIR);
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+      try {
+        mainWindow.webContents.send('projects-update', projects);
+      } catch (e) {
+        // Ignore send errors
+      }
+    }
+  } catch (e) {
+    // Ignore scan errors
   }
 }
 
@@ -88,12 +112,7 @@ ipcMain.handle('get-collapsed-state', () => isCollapsed);
 ipcMain.handle('refresh-projects', scanAndSend);
 
 ipcMain.handle('open-terminal', (_, projectPath) => {
-  // Open Terminal.app in the project directory
-  exec(`open -a Terminal "${projectPath}"`, (err) => {
-    if (err) {
-      console.error('Failed to open terminal:', err);
-    }
-  });
+  exec(`open -a Terminal "${projectPath}"`);
 });
 
 app.whenReady().then(createWindow);

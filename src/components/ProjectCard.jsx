@@ -1,3 +1,4 @@
+import { motion } from 'motion/react';
 import { formatTimeAgo } from '../utils/time';
 
 function isHebrew(text) {
@@ -8,43 +9,89 @@ function ProjectCard({ project, onClick }) {
   const hasUncommitted = project.uncommittedChanges > 0;
   const hasRemainingTasks = project.remainingTasks?.length > 0;
 
-  const getStatusColor = () => {
-    if (hasUncommitted) return 'from-orange-500 to-red-500';
-    if (hasRemainingTasks) return 'from-yellow-500 to-orange-500';
-    return 'from-green-500 to-emerald-500';
+  const getStatus = () => {
+    if (hasUncommitted) return { color: 'orange', label: 'שינויים' };
+    if (hasRemainingTasks) return { color: 'yellow', label: 'משימות' };
+    return { color: 'green', label: 'מעודכן' };
   };
 
+  const status = getStatus();
   const commitMessage = project.lastCommit?.message || '';
   const messageDir = isHebrew(commitMessage) ? 'rtl' : 'ltr';
 
+  const statusColors = {
+    orange: 'from-orange-500 to-red-500',
+    yellow: 'from-yellow-500 to-amber-500',
+    green: 'from-green-500 to-emerald-500',
+  };
+
   return (
-    <div
+    <motion.div
       onClick={onClick}
-      className="group relative bg-white/[0.03] hover:bg-white/[0.08] rounded-xl p-4 cursor-pointer border border-white/[0.06] hover:border-white/[0.12] transition-all duration-200"
+      className="glass-card rounded-2xl p-4 cursor-pointer relative overflow-hidden"
+      whileHover={{
+        scale: 1.02,
+        y: -4,
+        transition: { type: 'spring', stiffness: 400, damping: 25 }
+      }}
+      whileTap={{ scale: 0.98 }}
     >
+      {/* Hover glow effect */}
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl"
+        initial={{ opacity: 0 }}
+        whileHover={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      />
+
       {/* Status indicator line */}
-      <div className={`absolute right-0 top-3 bottom-3 w-1 rounded-full bg-gradient-to-b ${getStatusColor()} opacity-80`} />
+      <motion.div
+        className={`absolute right-0 top-4 bottom-4 w-1 rounded-full bg-gradient-to-b ${statusColors[status.color]}`}
+        initial={{ opacity: 0.5, scaleY: 0.8 }}
+        whileHover={{ opacity: 1, scaleY: 1 }}
+        transition={{ duration: 0.2 }}
+      />
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-3 pr-3">
+      <div className="flex items-center justify-between mb-3 pr-4 relative z-10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center text-white/70 font-medium text-sm border border-white/10">
-            {project.name.substring(0, 2).toUpperCase()}
-          </div>
-          <div>
-            <div className="text-white font-medium">{project.name}</div>
-            <div className="text-white/30 text-xs">{project.branch}</div>
+          {/* Project Icon */}
+          <motion.div
+            className="icon-wrapper w-11 h-11 rounded-xl flex items-center justify-center relative overflow-hidden"
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            transition={{ type: 'spring', stiffness: 400 }}
+          >
+            <span className="text-white/80 font-semibold text-sm tracking-wide relative z-10">
+              {project.name.substring(0, 2).toUpperCase()}
+            </span>
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-br from-blue-500/30 to-purple-500/30"
+              initial={{ opacity: 0 }}
+              whileHover={{ opacity: 1 }}
+            />
+          </motion.div>
+
+          {/* Project Info */}
+          <div className="space-y-0.5">
+            <div className="text-white font-medium text-[15px] tracking-tight">
+              {project.name}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-white/25 text-xs font-mono">{project.branch}</span>
+            </div>
           </div>
         </div>
-        <div className="text-white/25 text-xs">
+
+        {/* Time */}
+        <div className="text-white/20 text-xs font-medium">
           {formatTimeAgo(project.lastActivity)}
         </div>
       </div>
 
-      {/* Last Commit */}
+      {/* Commit Message */}
       {commitMessage && (
         <p
-          className="text-white/40 text-sm mb-3 truncate pr-3"
+          className="text-white/35 text-sm mb-3 truncate pr-4 relative z-10"
           style={{ direction: messageDir, textAlign: messageDir === 'rtl' ? 'right' : 'left' }}
         >
           {commitMessage}
@@ -54,35 +101,70 @@ function ProjectCard({ project, onClick }) {
       {/* Summary */}
       {project.summary && (
         <div
-          className="text-white/60 text-sm mb-3 line-clamp-2 pr-3 leading-relaxed"
+          className="text-white/50 text-sm mb-3 line-clamp-2 pr-4 leading-relaxed relative z-10"
           style={{ direction: isHebrew(project.summary) ? 'rtl' : 'ltr' }}
         >
           {project.summary}
         </div>
       )}
 
-      {/* Stats */}
-      <div className="flex items-center gap-3 text-xs pr-3">
+      {/* Stats Badges */}
+      <div className="flex items-center gap-2 pr-4 relative z-10">
         {hasRemainingTasks && (
-          <div className="flex items-center gap-1.5 text-yellow-400/70 bg-yellow-500/10 px-2 py-1 rounded-md">
-            <div className="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
+          <motion.div
+            className="badge badge-yellow"
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            whileHover={{ scale: 1.05 }}
+          >
+            <motion.span
+              className="w-1.5 h-1.5 rounded-full bg-yellow-400"
+              animate={{ opacity: [1, 0.5, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
             <span>{project.remainingTasks.length} משימות</span>
-          </div>
+          </motion.div>
         )}
         {hasUncommitted && (
-          <div className="flex items-center gap-1.5 text-orange-400/70 bg-orange-500/10 px-2 py-1 rounded-md">
-            <div className="w-1.5 h-1.5 rounded-full bg-orange-400"></div>
+          <motion.div
+            className="badge badge-orange"
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            whileHover={{ scale: 1.05 }}
+          >
+            <motion.span
+              className="w-1.5 h-1.5 rounded-full bg-orange-400"
+              animate={{ opacity: [1, 0.5, 1] }}
+              transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+            />
             <span>{project.uncommittedChanges} שינויים</span>
-          </div>
+          </motion.div>
         )}
         {!hasRemainingTasks && !hasUncommitted && (
-          <div className="flex items-center gap-1.5 text-green-400/70 bg-green-500/10 px-2 py-1 rounded-md">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
+          <motion.div
+            className="badge badge-green"
+            whileHover={{ scale: 1.05 }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
             <span>מעודכן</span>
-          </div>
+          </motion.div>
         )}
       </div>
-    </div>
+
+      {/* Shimmer effect on hover */}
+      <motion.div
+        className="absolute inset-0 rounded-2xl pointer-events-none"
+        style={{
+          background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%)',
+          backgroundSize: '200% 100%',
+        }}
+        initial={{ backgroundPosition: '-200% 0' }}
+        whileHover={{
+          backgroundPosition: '200% 0',
+          transition: { duration: 0.8, ease: 'easeInOut' }
+        }}
+      />
+    </motion.div>
   );
 }
 

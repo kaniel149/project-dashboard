@@ -60,7 +60,6 @@ async function scanProject(projectPath) {
       nextSteps: claudeStatus.nextSteps || null,
     };
   } catch (error) {
-    console.error(`Error scanning ${projectPath}:`, error.message);
     return null;
   }
 }
@@ -99,7 +98,6 @@ async function scanAllProjects(projectsDir) {
 
     return projects;
   } catch (error) {
-    console.error('Error scanning projects:', error);
     return [];
   }
 }

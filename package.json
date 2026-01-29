@@ -16,7 +16,7 @@
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.18",
     "chokidar": "^5.0.0",
-    "electron": "^40.0.0",
+    "motion": "^12.29.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "simple-git": "^3.30.0"
@@ -25,6 +25,7 @@
     "@vitejs/plugin-react": "^5.1.2",
     "autoprefixer": "^10.4.23",
     "concurrently": "^9.2.1",
+    "electron": "^40.0.0",
     "electron-builder": "^26.4.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
@@ -36,7 +37,8 @@
     "productName": "Project Dashboard",
     "mac": {
       "category": "public.app-category.developer-tools",
-      "target": "dir"
+      "target": "dir",
+      "identity": null
     },
     "files": [
       "dist/**/*",

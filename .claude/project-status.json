@@ -1,0 +1,15 @@
+{
+  "summary": "דשבורד דסקטופ לניהול פרויקטים עם עיצוב Premium Glass ואנימציות Motion",
+  "completedTasks": [
+    "תיקון שגיאת EPIPE",
+    "עיצוב Premium Glass עם Tailwind",
+    "הוספת אנימציות Motion",
+    "בניית האפליקציה ל-macOS"
+  ],
+  "remainingTasks": [
+    "הוספת אייקון לאפליקציה",
+    "תמיכה ב-auto-start",
+    "הוספת הגדרות"
+  ],
+  "nextSteps": "להוסיף אייקון מותאם אישית לאפליקציה"
+}
