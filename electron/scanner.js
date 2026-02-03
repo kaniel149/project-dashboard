@@ -1,6 +1,7 @@
 const simpleGit = require('simple-git');
 const fs = require('fs').promises;
 const path = require('path');
+const { getGitInfo } = require('./git-scanner');
 
 // MCP Status file location
 const STATUS_FILE = path.join(process.env.HOME, '.project-dashboard', 'status.json');
@@ -272,6 +273,9 @@ async function scanProject(projectPath) {
     // Read Claude live status from MCP
     const claudeLiveStatus = await readClaudeLiveStatus(projectPath);
 
+    // Get detailed git info for Git Graph view
+    const gitInfo = await getGitInfo(projectPath);
+
     return {
       name,
       path: projectPath,
@@ -291,6 +295,8 @@ async function scanProject(projectPath) {
       knownIssues: claudeStateMd.knownIssues || [],
       // Claude live status from MCP
       claudeLive: claudeLiveStatus,
+      // Git graph info
+      gitInfo,
     };
   } catch (error) {
     return null;

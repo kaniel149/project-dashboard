@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import ProjectCard from './ProjectCard';
 import ProjectExpanded from './ProjectExpanded';
 import GridView from './GridView';
+import GitView from './GitView';
 
 function Dashboard({ projects, onCollapse }) {
   const [expandedProject, setExpandedProject] = useState(null);
-  const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
+  const [viewMode, setViewMode] = useState('list'); // 'list', 'grid', or 'git'
   const [isGridFullscreen, setIsGridFullscreen] = useState(false);
 
   return (
@@ -15,8 +16,8 @@ function Dashboard({ projects, onCollapse }) {
       animate={{
         opacity: 1,
         scale: 1,
-        width: isGridFullscreen && viewMode === 'grid' ? 800 : 420,
-        height: isGridFullscreen && viewMode === 'grid' ? 600 : 550,
+        width: isGridFullscreen && (viewMode === 'grid' || viewMode === 'git') ? 800 : 420,
+        height: isGridFullscreen && (viewMode === 'grid' || viewMode === 'git') ? 600 : 550,
       }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       className="glass-container rounded-3xl flex flex-col overflow-hidden relative noise-overlay"
@@ -115,6 +116,22 @@ function Dashboard({ projects, onCollapse }) {
                 <rect x="3" y="14" width="7" height="7"/>
               </svg>
             </motion.button>
+            <motion.button
+              onClick={() => setViewMode('git')}
+              className={`px-2 py-1 rounded-md text-xs transition-colors ${
+                viewMode === 'git'
+                  ? 'bg-white/10 text-white'
+                  : 'text-white/40 hover:text-white/60'
+              }`}
+              whileTap={{ scale: 0.95 }}
+              title="Git Graph"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="18" cy="18" r="3"/>
+                <circle cx="6" cy="6" r="3"/>
+                <path d="M6 21V9a9 9 0 0 0 9 9"/>
+              </svg>
+            </motion.button>
           </div>
 
           {/* Map button */}
@@ -163,6 +180,30 @@ function Dashboard({ projects, onCollapse }) {
               <GridView
                 projects={projects}
                 onSelectProject={(project) => setExpandedProject(project)}
+                isFullscreen={isGridFullscreen}
+                onToggleFullscreen={() => {
+                  const newFullscreen = !isGridFullscreen;
+                  setIsGridFullscreen(newFullscreen);
+                  // Resize Electron window
+                  if (newFullscreen) {
+                    window.electronAPI?.setWindowSize(800, 600);
+                  } else {
+                    window.electronAPI?.setWindowSize(420, 550);
+                  }
+                }}
+              />
+            </motion.div>
+          ) : viewMode === 'git' ? (
+            <motion.div
+              key="git"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="h-full"
+            >
+              <GitView
+                projects={projects}
                 isFullscreen={isGridFullscreen}
                 onToggleFullscreen={() => {
                   const newFullscreen = !isGridFullscreen;
