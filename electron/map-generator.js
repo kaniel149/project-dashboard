@@ -7,12 +7,15 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-// Layer colors
+// Layer colors - extended for different project types
 const LAYER_COLORS = {
   screen: { bg: '#e9d5ff', border: '#a855f7', text: '#7c3aed' },      // Purple
   component: { bg: '#dbeafe', border: '#3b82f6', text: '#1d4ed8' },   // Blue
   feature: { bg: '#d1fae5', border: '#10b981', text: '#059669' },     // Green
   todo: { bg: '#fef3c7', border: '#f59e0b', text: '#d97706' },        // Orange
+  module: { bg: '#e0e7ff', border: '#6366f1', text: '#4f46e5' },      // Indigo (for MCP/backend)
+  function: { bg: '#fce7f3', border: '#ec4899', text: '#db2777' },    // Pink
+  api: { bg: '#ccfbf1', border: '#14b8a6', text: '#0d9488' },         // Teal
 };
 
 // Status colors
@@ -63,14 +66,23 @@ function generateMapStructure(scanData, existingMap = null) {
   const nodes = [];
   let yOffset = 100;
 
-  // Section: Screens
+  // Determine project type for appropriate labels
+  const projectType = scanData.meta?.projectType || 'unknown';
+  const isMCP = projectType === 'mcp-server';
+  const isBackend = projectType === 'backend';
+  const isPython = projectType === 'python';
+  const isNonFrontend = isMCP || isBackend || isPython;
+
+  // Section: Screens (or API endpoints for backend)
   if (scanData.layers.screens.length > 0) {
+    const headerName = isNonFrontend ? '🔌 API / Endpoints' : '📱 מסכים';
+
     // Add section header
     nodes.push({
       id: 'header-screens',
       type: 'header',
       layer: 'screen',
-      name: '📱 מסכים',
+      name: headerName,
       x: 50,
       y: yOffset,
       width: 800,
@@ -98,13 +110,27 @@ function generateMapStructure(scanData, existingMap = null) {
     yOffset += Math.ceil(screenNodes.length / 4) * 160 + 60;
   }
 
-  // Section: Components
+  // Section: Components (or Modules for non-frontend)
   if (scanData.layers.components.length > 0) {
+    let headerName = '🧩 קומפוננטות';
+    let layerType = 'component';
+    let colors = LAYER_COLORS.component;
+
+    if (isMCP) {
+      headerName = '📦 מודולים';
+      layerType = 'module';
+      colors = LAYER_COLORS.module;
+    } else if (isBackend || isPython) {
+      headerName = '🔧 מודולים';
+      layerType = 'module';
+      colors = LAYER_COLORS.module;
+    }
+
     nodes.push({
       id: 'header-components',
       type: 'header',
-      layer: 'component',
-      name: '🧩 קומפוננטות',
+      layer: layerType,
+      name: headerName,
       x: 50,
       y: yOffset,
       width: 800,
@@ -116,14 +142,15 @@ function generateMapStructure(scanData, existingMap = null) {
     const componentNodes = scanData.layers.components.map(comp => ({
       id: comp.id,
       type: 'node',
-      layer: 'component',
+      layer: comp.type === 'module' ? 'module' : layerType,
       name: comp.displayName,
-      subtitle: `${comp.lines} שורות`,
+      subtitle: `${comp.lines} שורות${comp.functions?.length ? ` • ${comp.functions.length} פונקציות` : ''}`,
       filePath: comp.filePath,
       relativePath: comp.relativePath,
       status: 'done',
       todoCount: comp.todos?.length || 0,
-      colors: LAYER_COLORS.component,
+      functions: comp.functions || [],
+      colors: comp.type === 'module' ? LAYER_COLORS.module : colors,
     }));
 
     const positioned = calculatePositions(componentNodes, 50, yOffset);

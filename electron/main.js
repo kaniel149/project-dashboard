@@ -55,6 +55,7 @@ const { createWatcher } = require('./watcher');
 const { generateProjectMap } = require('./excalidraw-generator');
 const { generateMapEditor, saveProjectMap: saveProjectMapFile } = require('./project-map-editor');
 const { generateInteractiveMap } = require('./interactive-map');
+const { updateClaudeState } = require('./project-scanner');
 
 let mainWindow;
 let isCollapsed = false;
@@ -215,6 +216,15 @@ ipcMain.handle('save-project-map', async (_, projectPath, mapData) => {
   try {
     await saveProjectMapFile(projectPath, mapData);
     return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('update-project-state', async (_, projectPath, changes) => {
+  try {
+    const result = await updateClaudeState(projectPath, changes);
+    return result;
   } catch (error) {
     return { success: false, error: error.message };
   }

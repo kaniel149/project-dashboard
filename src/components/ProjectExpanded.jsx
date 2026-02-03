@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import TaskList from './TaskList';
 import { formatTimeAgo } from '../utils/time';
@@ -7,6 +8,10 @@ function isHebrew(text) {
 }
 
 function ProjectExpanded({ project, onClose }) {
+  const [showSessionModal, setShowSessionModal] = useState(false);
+  const [sessionNotes, setSessionNotes] = useState('');
+  const [saving, setSaving] = useState(false);
+
   const hasUncommitted = project.uncommittedChanges > 0;
   const hasRemainingTasks = project.remainingTasks?.length > 0;
 
@@ -47,6 +52,36 @@ function ProjectExpanded({ project, onClose }) {
 
   const handleOpenClaude = () => {
     window.electronAPI?.openClaude(project.path);
+  };
+
+  const handleSaveSession = async () => {
+    setSaving(true);
+    try {
+      // Build session changes object
+      const changes = {
+        summary: sessionNotes || `סשן עבודה - ${new Date().toLocaleDateString('he-IL')}`,
+        features: [],
+        todos: project.completedTasks?.map(task => ({ text: task })) || [],
+        notes: sessionNotes,
+      };
+
+      // If we have remaining tasks, add them as planned features
+      if (project.remainingTasks?.length > 0) {
+        changes.features = project.remainingTasks.slice(0, 5).map(task => ({
+          name: task,
+          status: 'planned',
+        }));
+      }
+
+      const result = await window.electronAPI?.updateProjectState(project.path, changes);
+      if (result?.success) {
+        setShowSessionModal(false);
+        setSessionNotes('');
+      }
+    } catch (error) {
+      console.error('Failed to save session:', error);
+    }
+    setSaving(false);
   };
 
   const sectionVariants = {
@@ -293,6 +328,84 @@ function ProjectExpanded({ project, onClose }) {
         )}
       </div>
 
+      {/* Session Modal */}
+      <AnimatePresence>
+        {showSessionModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowSessionModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-5 w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-white font-semibold text-lg mb-4 flex items-center gap-2">
+                <span>💾</span>
+                שמירת סשן עבודה
+              </h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-white/60 text-sm mb-2 block">מה עשית היום?</label>
+                  <textarea
+                    value={sessionNotes}
+                    onChange={(e) => setSessionNotes(e.target.value)}
+                    placeholder="תיאור קצר של העבודה שבוצעה..."
+                    className="w-full h-24 bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm resize-none focus:outline-none focus:border-white/20"
+                    dir="rtl"
+                  />
+                </div>
+
+                {project.completedTasks?.length > 0 && (
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3">
+                    <div className="text-green-400 text-xs font-medium mb-2">✅ משימות שהושלמו ({project.completedTasks.length})</div>
+                    <div className="space-y-1">
+                      {project.completedTasks.slice(0, 3).map((task, i) => (
+                        <div key={i} className="text-white/50 text-xs">{task}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {project.uncommittedChanges > 0 && (
+                  <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3">
+                    <div className="text-orange-400 text-xs font-medium">
+                      ⚠️ {project.uncommittedChanges} שינויים לא committed
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 mt-5">
+                <motion.button
+                  onClick={() => setShowSessionModal(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm"
+                  whileHover={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  ביטול
+                </motion.button>
+                <motion.button
+                  onClick={handleSaveSession}
+                  disabled={saving}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-sm font-medium"
+                  whileHover={{ backgroundColor: 'rgba(16, 185, 129, 0.3)' }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {saving ? 'שומר...' : '💾 שמור'}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Footer */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -301,6 +414,14 @@ function ProjectExpanded({ project, onClose }) {
         className="px-4 py-3 border-t border-white/[0.06] bg-gradient-to-r from-white/[0.02] to-transparent flex items-center justify-between"
       >
         <div className="text-xs text-white/25 flex items-center gap-3">
+          <motion.button
+            onClick={() => setShowSessionModal(true)}
+            className="bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg text-emerald-400/80 hover:bg-emerald-500/20 transition-colors"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            💾 שמור סשן
+          </motion.button>
           <span className="bg-white/[0.06] border border-white/[0.08] px-2.5 py-1 rounded-lg font-mono text-white/40">
             {project.branch}
           </span>

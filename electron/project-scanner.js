@@ -27,13 +27,31 @@ const PATTERNS = {
 
 // Directories to scan for different types
 const SCAN_DIRS = {
-  components: ['src/components', 'components', 'src/ui', 'app/components'],
-  pages: ['src/pages', 'pages', 'src/screens', 'screens', 'app', 'src/app', 'src/views'],
-  routes: ['src/routes', 'src/router', 'app'],
+  components: [
+    'src/components', 'components', 'src/ui', 'app/components',
+    'src/lib', 'lib', 'src/shared', 'shared', 'src/common',
+    'core', 'modules', 'src/modules'
+  ],
+  pages: [
+    'src/pages', 'pages', 'src/screens', 'screens', 'app', 'src/app',
+    'src/views', 'views', 'src/routes', 'routes',
+    // Next.js App Router patterns
+    'src/app/(dashboard)', 'src/app/(auth)', 'app/(dashboard)', 'app/(auth)'
+  ],
+  routes: ['src/routes', 'src/router', 'app', 'src/app'],
+  // Additional patterns for different project types
+  modules: ['src', 'lib', 'core', 'modules'],
 };
 
-// File extensions to scan
-const CODE_EXTENSIONS = ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'];
+// File extensions to scan by language
+const CODE_EXTENSIONS_BY_TYPE = {
+  javascript: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'],
+  python: ['.py'],
+  all: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte', '.py'],
+};
+
+// File extensions to scan (used as default)
+const CODE_EXTENSIONS = ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte', '.py'];
 
 /**
  * Scan a single file for components and exports
@@ -43,6 +61,7 @@ async function scanFile(filePath) {
     const content = await fs.readFile(filePath, 'utf-8');
     const ext = path.extname(filePath);
     const fileName = path.basename(filePath, ext);
+    const isPython = ext === '.py';
 
     const result = {
       path: filePath,
@@ -53,69 +72,108 @@ async function scanFile(filePath) {
       todos: [],
       functions: [],
       hooks: [],
+      classes: [],
       lines: content.split('\n').length,
+      language: isPython ? 'python' : 'javascript',
     };
 
-    // Extract functions/components defined in file
-    const funcRegex = /(?:export\s+)?(?:async\s+)?function\s+(\w+)/g;
-    let funcMatch;
-    while ((funcMatch = funcRegex.exec(content)) !== null) {
-      result.functions.push(funcMatch[1]);
-    }
+    if (isPython) {
+      // Extract Python functions
+      const pyFuncRegex = /^(?:async\s+)?def\s+(\w+)/gm;
+      let funcMatch;
+      while ((funcMatch = pyFuncRegex.exec(content)) !== null) {
+        if (!funcMatch[1].startsWith('_')) { // Skip private functions
+          result.functions.push(funcMatch[1]);
+        }
+      }
 
-    // Extract arrow function components
-    const arrowRegex = /(?:export\s+)?const\s+(\w+)\s*=\s*(?:\([^)]*\)|[^=])\s*=>/g;
-    while ((funcMatch = arrowRegex.exec(content)) !== null) {
-      if (funcMatch[1][0] === funcMatch[1][0].toUpperCase()) {
+      // Extract Python classes
+      const pyClassRegex = /^class\s+(\w+)/gm;
+      while ((funcMatch = pyClassRegex.exec(content)) !== null) {
+        result.classes.push(funcMatch[1]);
+        result.exports.push(funcMatch[1]);
+      }
+
+      // Extract Python imports
+      const pyImportRegex = /^(?:from\s+(\S+)\s+)?import\s+(.+)$/gm;
+      let match;
+      while ((match = pyImportRegex.exec(content)) !== null) {
+        const fromModule = match[1];
+        const imports = match[2].split(',').map(s => s.trim().split(' as ')[0]);
+        if (fromModule && !fromModule.startsWith('.')) continue; // Skip external
+        result.imports.push({
+          names: imports,
+          from: fromModule || imports[0],
+        });
+      }
+
+      // Add main module as export
+      if (result.functions.length > 0) {
+        result.exports.push(fileName);
+      }
+    } else {
+      // JavaScript/TypeScript parsing
+      // Extract functions/components defined in file
+      const funcRegex = /(?:export\s+)?(?:async\s+)?function\s+(\w+)/g;
+      let funcMatch;
+      while ((funcMatch = funcRegex.exec(content)) !== null) {
         result.functions.push(funcMatch[1]);
       }
-    }
 
-    // Extract React hooks usage
-    const hookRegex = /use(\w+)\s*\(/g;
-    while ((funcMatch = hookRegex.exec(content)) !== null) {
-      const hookName = 'use' + funcMatch[1];
-      if (!result.hooks.includes(hookName)) {
-        result.hooks.push(hookName);
+      // Extract arrow function components
+      const arrowRegex = /(?:export\s+)?const\s+(\w+)\s*=\s*(?:\([^)]*\)|[^=])\s*=>/g;
+      while ((funcMatch = arrowRegex.exec(content)) !== null) {
+        if (funcMatch[1][0] === funcMatch[1][0].toUpperCase()) {
+          result.functions.push(funcMatch[1]);
+        }
+      }
+
+      // Extract React hooks usage
+      const hookRegex = /use(\w+)\s*\(/g;
+      while ((funcMatch = hookRegex.exec(content)) !== null) {
+        const hookName = 'use' + funcMatch[1];
+        if (!result.hooks.includes(hookName)) {
+          result.hooks.push(hookName);
+        }
+      }
+
+      // Extract exports (component names)
+      let match;
+      const exportRegex = /export\s+(?:default\s+)?(?:function|class|const)\s+(\w+)/g;
+      while ((match = exportRegex.exec(content)) !== null) {
+        if (match[1] && !['default'].includes(match[1].toLowerCase())) {
+          result.exports.push(match[1]);
+        }
+      }
+
+      // Also check for: export default ComponentName
+      const defaultExport = content.match(/export\s+default\s+(\w+)\s*;?\s*$/m);
+      if (defaultExport && defaultExport[1]) {
+        if (!result.exports.includes(defaultExport[1])) {
+          result.exports.push(defaultExport[1]);
+        }
+      }
+
+      // Extract imports
+      const importRegex = /import\s+(?:\{([^}]+)\}|(\w+))\s+from\s+['"]([^'"]+)['"]/g;
+      while ((match = importRegex.exec(content)) !== null) {
+        const importPath = match[3];
+        if (importPath && !importPath.startsWith('.') && !importPath.startsWith('@/')) {
+          continue; // Skip external packages
+        }
+        result.imports.push({
+          names: match[1] ? match[1].split(',').map(s => s.trim()) : [match[2]],
+          from: importPath,
+        });
       }
     }
 
-    // Extract exports (component names)
-    let match;
-    const exportRegex = /export\s+(?:default\s+)?(?:function|class|const)\s+(\w+)/g;
-    while ((match = exportRegex.exec(content)) !== null) {
-      if (match[1] && !['default'].includes(match[1].toLowerCase())) {
-        result.exports.push(match[1]);
-      }
-    }
-
-    // Also check for: export default ComponentName
-    const defaultExport = content.match(/export\s+default\s+(\w+)\s*;?\s*$/m);
-    if (defaultExport && defaultExport[1]) {
-      if (!result.exports.includes(defaultExport[1])) {
-        result.exports.push(defaultExport[1]);
-      }
-    }
-
-    // Extract imports
-    const importRegex = /import\s+(?:\{([^}]+)\}|(\w+))\s+from\s+['"]([^'"]+)['"]/g;
-    while ((match = importRegex.exec(content)) !== null) {
-      const importPath = match[3];
-      if (importPath && !importPath.startsWith('.') && !importPath.startsWith('@/')) {
-        continue; // Skip external packages
-      }
-      result.imports.push({
-        names: match[1] ? match[1].split(',').map(s => s.trim()) : [match[2]],
-        from: importPath,
-      });
-    }
-
-    // Extract TODOs
-    const todoRegex = /\/\/\s*(TODO|FIXME|BUG|HACK|NOTE):\s*(.+)$/gm;
+    // Extract TODOs (works for both JS and Python)
     let lineNum = 0;
     for (const line of content.split('\n')) {
       lineNum++;
-      const todoMatch = line.match(/\/\/\s*(TODO|FIXME|BUG|HACK|NOTE):\s*(.+)$/);
+      // Match both // and # comments
+      const todoMatch = line.match(/(?:\/\/|#)\s*(TODO|FIXME|BUG|HACK|NOTE):\s*(.+)$/);
       if (todoMatch) {
         result.todos.push({
           type: todoMatch[1],
@@ -175,8 +233,27 @@ async function detectProjectType(projectPath) {
     type: 'unknown',
     framework: null,
     hasTypeScript: false,
+    isPython: false,
+    isMCP: false,
+    isBackend: false,
     structure: {},
+    language: 'javascript',
   };
+
+  // Check for Python project
+  try {
+    await fs.access(path.join(projectPath, 'requirements.txt'));
+    result.isPython = true;
+    result.language = 'python';
+    result.type = 'python';
+  } catch (e) {}
+
+  try {
+    await fs.access(path.join(projectPath, 'pyproject.toml'));
+    result.isPython = true;
+    result.language = 'python';
+    result.type = 'python';
+  } catch (e) {}
 
   try {
     // Check package.json
@@ -184,6 +261,12 @@ async function detectProjectType(projectPath) {
     const pkgContent = await fs.readFile(pkgPath, 'utf-8');
     const pkg = JSON.parse(pkgContent);
     const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+
+    // Detect MCP server
+    if (deps['@modelcontextprotocol/sdk'] || pkg.name?.includes('mcp')) {
+      result.isMCP = true;
+      result.type = 'mcp-server';
+    }
 
     // Detect framework
     if (deps['next']) result.framework = 'nextjs';
@@ -193,26 +276,36 @@ async function detectProjectType(projectPath) {
     else if (deps['vue']) result.framework = 'vue';
     else if (deps['svelte']) result.framework = 'svelte';
     else if (deps['electron']) result.framework = 'electron';
+    else if (deps['express'] || deps['fastify'] || deps['koa']) {
+      result.isBackend = true;
+      result.type = 'backend';
+    }
 
     result.hasTypeScript = !!deps['typescript'];
-    result.type = result.framework || 'javascript';
+    if (!result.isMCP && !result.isBackend) {
+      result.type = result.framework || 'javascript';
+    }
 
   } catch (e) {
     // No package.json
   }
 
-  // Check for common directories
+  // Check for common directories - collect all matches
   for (const [type, dirs] of Object.entries(SCAN_DIRS)) {
+    result.structure[type] = [];
     for (const dir of dirs) {
       const fullPath = path.join(projectPath, dir);
       try {
-        await fs.access(fullPath);
-        result.structure[type] = dir;
-        break;
+        const stat = await fs.stat(fullPath);
+        if (stat.isDirectory()) {
+          result.structure[type].push(dir);
+        }
       } catch (e) {
         // Dir doesn't exist
       }
     }
+    // Use first match as primary
+    result.structure[type] = result.structure[type][0] || null;
   }
 
   return result;
@@ -223,52 +316,102 @@ async function detectProjectType(projectPath) {
  */
 async function extractScreens(projectPath, projectType) {
   const screens = [];
-  const pagesDir = projectType.structure.pages;
 
-  if (!pagesDir) return screens;
+  // Try multiple page directories
+  const pageDirs = [];
+  if (projectType.structure.pages) {
+    pageDirs.push(projectType.structure.pages);
+  }
 
-  const fullPath = path.join(projectPath, pagesDir);
-  const files = await scanDirectory(fullPath);
+  // Also check app directory for Next.js App Router
+  if (projectType.framework === 'nextjs') {
+    for (const appDir of ['src/app', 'app']) {
+      const fullPath = path.join(projectPath, appDir);
+      try {
+        await fs.access(fullPath);
+        pageDirs.push(appDir);
+      } catch (e) {}
+    }
+  }
 
-  for (const file of files) {
-    // Skip layout files, error pages, etc.
-    if (['layout', 'error', 'loading', '_app', '_document'].some(
-      skip => file.name.toLowerCase().includes(skip)
-    )) {
+  if (pageDirs.length === 0) return screens;
+
+  // Scan all found directories
+  for (const pagesDir of [...new Set(pageDirs)]) {
+    const fullPath = path.join(projectPath, pagesDir);
+    let files = [];
+    try {
+      files = await scanDirectory(fullPath);
+    } catch (e) {
       continue;
     }
 
-    // Determine route from file path
-    let route = '/' + file.relativePath
-      .replace(/\\/g, '/')
-      .replace(/\.(jsx?|tsx?)$/, '')
-      .replace(/\/index$/, '')
-      .replace(/\/page$/, '');
+    for (const file of files) {
+      // Skip layout files, error pages, etc.
+      if (['layout', 'error', 'loading', '_app', '_document', 'not-found', 'global-error'].some(
+        skip => file.name.toLowerCase().includes(skip)
+      )) {
+        continue;
+      }
 
-    if (route === '/') route = '/';
+      // Skip API routes
+      if (file.relativePath.includes('/api/') || file.relativePath.startsWith('api/')) {
+        continue;
+      }
 
-    // Extract component imports from this screen
-    const componentImports = file.imports
-      .filter(imp => imp.from.includes('component') || imp.from.startsWith('./') || imp.from.startsWith('../'))
-      .flatMap(imp => imp.names)
-      .filter(name => name && name[0] === name[0].toUpperCase());
+      // Only include page.tsx/js files for App Router, or any file for Pages Router
+      const isAppRouter = pagesDir.includes('app');
+      if (isAppRouter && file.name !== 'page') {
+        continue;
+      }
 
-    screens.push({
-      id: `screen-${file.name}`,
-      type: 'screen',
-      name: file.name,
-      displayName: formatDisplayName(file.name),
-      route,
-      filePath: file.path,
-      relativePath: file.relativePath,
-      exports: file.exports,
-      imports: file.imports,
-      todos: file.todos,
-      functions: file.functions || [],
-      hooks: file.hooks || [],
-      usedComponents: componentImports,
-      lines: file.lines,
-    });
+      // Determine route from file path
+      let route = '/' + file.relativePath
+        .replace(/\\/g, '/')
+        .replace(/\.(jsx?|tsx?)$/, '')
+        .replace(/\/index$/, '')
+        .replace(/\/page$/, '')
+        // Remove route groups like (dashboard)
+        .replace(/\/\([^)]+\)/g, '');
+
+      if (route === '/') route = '/';
+
+      // Clean route name for display
+      let displayName = file.name;
+      if (file.name === 'page') {
+        // Use parent folder name for App Router pages
+        const parts = file.relativePath.split('/');
+        const parentDir = parts[parts.length - 2] || 'home';
+        displayName = parentDir.replace(/^\(.*\)$/, '') || 'home';
+      }
+
+      // Extract component imports from this screen
+      const componentImports = file.imports
+        .filter(imp => imp.from.includes('component') || imp.from.startsWith('./') || imp.from.startsWith('../'))
+        .flatMap(imp => imp.names)
+        .filter(name => name && name[0] === name[0].toUpperCase());
+
+      // Avoid duplicate screens
+      const screenId = `screen-${route.replace(/\//g, '-') || 'home'}`;
+      if (screens.some(s => s.id === screenId)) continue;
+
+      screens.push({
+        id: screenId,
+        type: 'screen',
+        name: displayName,
+        displayName: formatDisplayName(displayName),
+        route,
+        filePath: file.path,
+        relativePath: file.relativePath,
+        exports: file.exports,
+        imports: file.imports,
+        todos: file.todos,
+        functions: file.functions || [],
+        hooks: file.hooks || [],
+        usedComponents: componentImports,
+        lines: file.lines,
+      });
+    }
   }
 
   return screens;
@@ -279,33 +422,75 @@ async function extractScreens(projectPath, projectType) {
  */
 async function extractComponents(projectPath, projectType) {
   const components = [];
-  const componentsDir = projectType.structure.components;
 
-  if (!componentsDir) return components;
+  // Determine directories to scan based on project type
+  let dirsToScan = [];
 
-  const fullPath = path.join(projectPath, componentsDir);
-  const files = await scanDirectory(fullPath);
+  if (projectType.structure.components) {
+    dirsToScan.push(projectType.structure.components);
+  }
 
-  for (const file of files) {
-    // Skip index files and test files
-    if (file.name === 'index' || file.name.includes('.test') || file.name.includes('.spec')) {
+  // For MCP servers or backend, scan src and core directories
+  if (projectType.isMCP || projectType.isBackend || !projectType.structure.components) {
+    for (const dir of ['src', 'lib', 'core', 'modules']) {
+      const fullPath = path.join(projectPath, dir);
+      try {
+        await fs.access(fullPath);
+        dirsToScan.push(dir);
+      } catch (e) {}
+    }
+  }
+
+  if (dirsToScan.length === 0) return components;
+
+  // Scan all found directories
+  for (const componentsDir of [...new Set(dirsToScan)]) {
+    const fullPath = path.join(projectPath, componentsDir);
+    let files = [];
+    try {
+      files = await scanDirectory(fullPath);
+    } catch (e) {
       continue;
     }
 
-    const componentName = file.exports[0] || file.name;
+    for (const file of files) {
+      // Skip index files and test files
+      if (file.name === 'index' || file.name.includes('.test') || file.name.includes('.spec')) {
+        continue;
+      }
 
-    components.push({
-      id: `component-${componentName}`,
-      type: 'component',
-      name: componentName,
-      displayName: formatDisplayName(componentName),
-      filePath: file.path,
-      relativePath: file.relativePath,
-      exports: file.exports,
-      imports: file.imports,
-      todos: file.todos,
-      lines: file.lines,
-    });
+      // Skip page files (they're screens)
+      if (file.name === 'page' || file.name === 'layout') {
+        continue;
+      }
+
+      const componentName = file.exports[0] || file.name;
+
+      // Avoid duplicates
+      const componentId = `component-${componentName}`;
+      if (components.some(c => c.id === componentId)) continue;
+
+      // Determine component type for non-React projects
+      let componentType = 'component';
+      if (projectType.isMCP) componentType = 'module';
+      if (projectType.isBackend) componentType = 'module';
+      if (projectType.isPython) componentType = 'module';
+
+      components.push({
+        id: componentId,
+        type: componentType,
+        name: componentName,
+        displayName: formatDisplayName(componentName),
+        filePath: file.path,
+        relativePath: file.relativePath,
+        exports: file.exports,
+        imports: file.imports,
+        todos: file.todos,
+        functions: file.functions || [],
+        hooks: file.hooks || [],
+        lines: file.lines,
+      });
+    }
   }
 
   return components;
@@ -478,6 +663,156 @@ async function scanProjectForMap(projectPath) {
   };
 }
 
+/**
+ * Update CLAUDE_STATE.md with work session changes
+ * @param {string} projectPath - Path to project
+ * @param {Object} changes - Changes made during the session
+ */
+async function updateClaudeState(projectPath, changes) {
+  const statePath = path.join(projectPath, 'CLAUDE_STATE.md');
+  let content;
+
+  try {
+    content = await fs.readFile(statePath, 'utf-8');
+  } catch (e) {
+    // Create new CLAUDE_STATE.md if doesn't exist
+    content = `# ${path.basename(projectPath)}
+
+## Project Overview
+Project managed via Project Dashboard.
+
+## Current Status
+| Area | Status |
+|------|--------|
+
+## Work Session Log
+
+## Immediate Goals
+
+## Known Issues
+
+---
+*Last updated: ${new Date().toISOString()}*
+`;
+  }
+
+  // Add work session log entry
+  const timestamp = new Date().toLocaleString('he-IL', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const sessionEntry = generateSessionEntry(timestamp, changes);
+
+  // Insert session entry after "## Work Session Log" header
+  if (content.includes('## Work Session Log')) {
+    content = content.replace(
+      /(## Work Session Log\n)/,
+      `$1\n### ${timestamp}\n${sessionEntry}\n`
+    );
+  } else {
+    // Add section if it doesn't exist
+    const insertPoint = content.indexOf('## Immediate Goals');
+    if (insertPoint > -1) {
+      content = content.slice(0, insertPoint) +
+        `## Work Session Log\n\n### ${timestamp}\n${sessionEntry}\n\n` +
+        content.slice(insertPoint);
+    } else {
+      content += `\n## Work Session Log\n\n### ${timestamp}\n${sessionEntry}\n`;
+    }
+  }
+
+  // Update status table if feature status changed
+  if (changes.features && changes.features.length > 0) {
+    content = updateStatusTable(content, changes.features);
+  }
+
+  // Update timestamp
+  content = content.replace(
+    /\*Last updated:.*\*/,
+    `*Last updated: ${new Date().toISOString()}*`
+  );
+
+  await fs.writeFile(statePath, content);
+  return { success: true, path: statePath };
+}
+
+/**
+ * Generate session entry text
+ */
+function generateSessionEntry(timestamp, changes) {
+  const lines = [];
+
+  if (changes.summary) {
+    lines.push(changes.summary);
+    lines.push('');
+  }
+
+  if (changes.features && changes.features.length > 0) {
+    lines.push('**פיצ׳רים:**');
+    for (const feature of changes.features) {
+      const statusEmoji = feature.status === 'done' ? '✅' :
+                          feature.status === 'in_progress' ? '🔄' :
+                          feature.status === 'blocked' ? '🚫' : '📝';
+      lines.push(`- ${statusEmoji} ${feature.name}`);
+    }
+    lines.push('');
+  }
+
+  if (changes.todos && changes.todos.length > 0) {
+    lines.push('**משימות שהושלמו:**');
+    for (const todo of changes.todos) {
+      lines.push(`- ✅ ${todo.text}`);
+    }
+    lines.push('');
+  }
+
+  if (changes.notes) {
+    lines.push('**הערות:**');
+    lines.push(changes.notes);
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Update status table in CLAUDE_STATE.md
+ */
+function updateStatusTable(content, features) {
+  for (const feature of features) {
+    const statusText = feature.status === 'done' ? '✅ הושלם' :
+                       feature.status === 'in_progress' ? '🔄 בעבודה' :
+                       feature.status === 'blocked' ? '🚫 חסום' : '📝 מתוכנן';
+
+    // Try to update existing row
+    const rowRegex = new RegExp(`\\|\\s*${escapeRegex(feature.name)}\\s*\\|[^|]*\\|`, 'g');
+    if (rowRegex.test(content)) {
+      content = content.replace(rowRegex, `| ${feature.name} | ${statusText} |`);
+    } else {
+      // Add new row to table
+      const tableEnd = content.indexOf('\n\n', content.indexOf('| Area | Status |'));
+      if (tableEnd > -1) {
+        content = content.slice(0, tableEnd) +
+          `\n| ${feature.name} | ${statusText} |` +
+          content.slice(tableEnd);
+      }
+    }
+  }
+
+  return content;
+}
+
+/**
+ * Escape special regex characters
+ */
+function escapeRegex(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 module.exports = {
   scanProjectForMap,
   scanFile,
@@ -487,4 +822,5 @@ module.exports = {
   extractComponents,
   extractAllTodos,
   readClaudeState,
+  updateClaudeState,
 };

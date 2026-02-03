@@ -69,6 +69,7 @@ npm run uninstall-app  # Remove from /Applications
 | Task Management | 📝 | Planned |
 | Notifications | 📝 | Planned |
 | Quick Actions (VS Code, dev) | 📝 | Planned |
+| תכונה בדיקה | 🔄 בעבודה |
 
 **Legend:** ✅ Complete | 🔄 In Progress | 📝 Planned
 
@@ -126,3 +127,18 @@ npm run uninstall-app  # Remove from /Applications
 ---
 
 *Update this file at the end of each development session.*
+
+## Work Session Log
+
+### 03.02.2026, 19:36
+בדיקת פונקציית שמירת סשן
+
+**פיצ׳רים:**
+- 🔄 תכונה בדיקה
+
+**משימות שהושלמו:**
+- ✅ משימה שהושלמה
+
+**הערות:**
+הערות לבדיקה
+
