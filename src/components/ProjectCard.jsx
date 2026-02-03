@@ -77,6 +77,12 @@ function ProjectCard({ project, onClick }) {
               {project.name}
             </div>
             <div className="flex items-center gap-2">
+              {project.category && (
+                <span className="text-white/20 text-xs bg-white/[0.06] px-1.5 py-0.5 rounded">
+                  {project.category === 'business-projects' ? 'עסקי' :
+                   project.category === 'personal-projects' ? 'אישי' : project.category}
+                </span>
+              )}
               <span className="text-white/25 text-xs font-mono">{project.branch}</span>
             </div>
           </div>

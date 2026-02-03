@@ -37,6 +37,14 @@ function ProjectExpanded({ project, onClose }) {
     window.electronAPI?.openTerminal(project.path);
   };
 
+  const handleOpenVSCode = () => {
+    window.electronAPI?.openVSCode(project.path);
+  };
+
+  const handleOpenMap = () => {
+    window.electronAPI?.openProjectMap(project.path, project);
+  };
+
   const sectionVariants = {
     hidden: { opacity: 0, y: 15 },
     visible: (i) => ({
@@ -104,13 +112,67 @@ function ProjectExpanded({ project, onClose }) {
             animate="visible"
             variants={sectionVariants}
           >
-            <Section title="על מה עבדתי" icon="💡" color="blue">
+            <Section title="על הפרויקט" icon="💡" color="blue">
               <p
                 className="text-white/70 text-sm leading-relaxed"
                 style={{ direction: isHebrew(project.summary) ? 'rtl' : 'ltr' }}
               >
                 {project.summary}
               </p>
+            </Section>
+          </motion.div>
+        )}
+
+        {/* Tech Stack */}
+        {project.techStack?.length > 0 && (
+          <motion.div
+            custom={0.5}
+            initial="hidden"
+            animate="visible"
+            variants={sectionVariants}
+          >
+            <Section title="טכנולוגיות" icon="⚙" color="slate">
+              <div className="flex flex-wrap gap-1.5">
+                {project.techStack.slice(0, 6).map((tech, i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="text-xs bg-white/[0.08] text-white/60 px-2 py-1 rounded-md border border-white/[0.06]"
+                  >
+                    {tech}
+                  </motion.span>
+                ))}
+              </div>
+            </Section>
+          </motion.div>
+        )}
+
+        {/* Known Issues */}
+        {project.knownIssues?.length > 0 && (
+          <motion.div
+            custom={0.7}
+            initial="hidden"
+            animate="visible"
+            variants={sectionVariants}
+          >
+            <Section title={`בעיות ידועות (${project.knownIssues.length})`} icon="⚠" color="orange">
+              <div className="space-y-1.5">
+                {project.knownIssues.slice(0, 3).map((issue, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="text-white/50 text-sm flex items-start gap-2"
+                    style={{ direction: isHebrew(issue) ? 'rtl' : 'ltr' }}
+                  >
+                    <span className="text-orange-400/60 mt-0.5">•</span>
+                    <span>{issue}</span>
+                  </motion.div>
+                ))}
+              </div>
             </Section>
           </motion.div>
         )}
@@ -242,18 +304,40 @@ function ProjectExpanded({ project, onClose }) {
             עדכון {formatTimeAgo(project.lastActivity)}
           </span>
         </div>
-        <motion.button
-          onClick={handleOpenTerminal}
-          className="btn-premium flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-medium relative overflow-hidden"
-          whileHover={{ scale: 1.03, y: -1 }}
-          whileTap={{ scale: 0.97 }}
-          transition={{ type: 'spring', stiffness: 400 }}
-        >
-          <span className="relative z-10 flex items-center gap-2">
-            <TerminalIcon />
-            <span>פתח טרמינל</span>
-          </span>
-        </motion.button>
+        <div className="flex items-center gap-2">
+          <motion.button
+            onClick={handleOpenMap}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-purple-500/20 border border-purple-500/30 text-purple-400 text-sm font-medium"
+            whileHover={{ scale: 1.03, y: -1, backgroundColor: 'rgba(168, 85, 247, 0.3)' }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 400 }}
+          >
+            <MapIcon />
+            <span>מפה</span>
+          </motion.button>
+          <motion.button
+            onClick={handleOpenVSCode}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#007ACC]/20 border border-[#007ACC]/30 text-[#007ACC] text-sm font-medium"
+            whileHover={{ scale: 1.03, y: -1, backgroundColor: 'rgba(0, 122, 204, 0.3)' }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 400 }}
+          >
+            <VSCodeIcon />
+            <span>VS Code</span>
+          </motion.button>
+          <motion.button
+            onClick={handleOpenTerminal}
+            className="btn-premium flex items-center gap-2 px-3 py-2 rounded-xl text-white text-sm font-medium relative overflow-hidden"
+            whileHover={{ scale: 1.03, y: -1 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 400 }}
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              <TerminalIcon />
+              <span>טרמינל</span>
+            </span>
+          </motion.button>
+        </div>
       </motion.div>
     </motion.div>
   );
@@ -291,6 +375,24 @@ function TerminalIcon() {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="4 17 10 11 4 5" />
       <line x1="12" y1="19" x2="20" y2="19" />
+    </svg>
+  );
+}
+
+function VSCodeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.583 2.041L12.2 6.78 6.817 2.041 5 3.358v17.284l1.817 1.317 5.383-4.739 5.383 4.739L19 20.642V3.358l-1.417-1.317zM6.5 17.5v-11l4.5 5.5-4.5 5.5zm11 0l-4.5-5.5 4.5-5.5v11z"/>
+    </svg>
+  );
+}
+
+function MapIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+      <line x1="8" y1="2" x2="8" y2="18"/>
+      <line x1="16" y1="6" x2="16" y2="22"/>
     </svg>
   );
 }

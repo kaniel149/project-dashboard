@@ -8,16 +8,25 @@ function App() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let cleanup = null;
+
     try {
       window.electronAPI?.getCollapsedState().then(setIsCollapsed).catch(console.error);
 
-      window.electronAPI?.onProjectsUpdate((data) => {
-        console.log('Projects received:', data);
+      // Set up listener and get cleanup function
+      cleanup = window.electronAPI?.onProjectsUpdate((data) => {
         setProjects(data);
       });
     } catch (e) {
       setError(e.message);
     }
+
+    // Cleanup function to prevent memory leaks
+    return () => {
+      if (cleanup && typeof cleanup === 'function') {
+        cleanup();
+      }
+    };
   }, []);
 
   const handleToggle = async () => {

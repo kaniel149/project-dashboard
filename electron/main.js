@@ -52,6 +52,8 @@ const path = require('path');
 const { exec } = require('child_process');
 const { scanAllProjects } = require('./scanner');
 const { createWatcher } = require('./watcher');
+const { generateProjectMap } = require('./excalidraw-generator');
+const { generateMapEditor, saveProjectMap: saveProjectMapFile } = require('./project-map-editor');
 
 let mainWindow;
 let isCollapsed = false;
@@ -141,10 +143,65 @@ ipcMain.handle('toggle-collapse', () => {
 });
 
 ipcMain.handle('get-collapsed-state', () => isCollapsed);
-ipcMain.handle('refresh-projects', scanAndSend);
+ipcMain.handle('refresh-projects', async () => {
+  try {
+    await scanAndSend();
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
 
 ipcMain.handle('open-terminal', (_, projectPath) => {
-  exec(`open -a Terminal "${projectPath}"`);
+  // Escape quotes in path to prevent shell injection
+  const safePath = projectPath.replace(/"/g, '\\"');
+  exec(`open -a Terminal "${safePath}"`);
+  return { success: true };
+});
+
+ipcMain.handle('generate-project-map', async () => {
+  try {
+    const projects = await scanAllProjects(PROJECTS_DIR);
+    const outputPath = path.join(PROJECTS_DIR, 'project-map.excalidraw');
+    const { htmlPath } = await generateProjectMap(projects, outputPath);
+
+    // Open HTML file in default browser
+    exec(`open "${htmlPath}"`);
+
+    return { success: true, path: htmlPath };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('open-vscode', (_, projectPath) => {
+  // Escape quotes in path to prevent shell injection
+  const safePath = projectPath.replace(/"/g, '\\"');
+  exec(`code "${safePath}"`);
+  return { success: true };
+});
+
+ipcMain.handle('open-project-map', async (_, projectPath, projectData) => {
+  try {
+    const { generateWhiteboardHtml } = require('./simple-whiteboard');
+    const { htmlPath, isNew } = await generateWhiteboardHtml(projectPath, projectData);
+
+    // Open in default browser
+    exec(`open "${htmlPath}"`);
+
+    return { success: true, path: htmlPath, isNew };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('save-project-map', async (_, projectPath, mapData) => {
+  try {
+    await saveProjectMapFile(projectPath, mapData);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
 });
 
 app.whenReady().then(createWindow);
