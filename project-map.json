@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "name": "project-dashboard",
+  "createdAt": "2026-02-03T11:46:29.155Z",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "section",
+      "x": 50,
+      "y": 50,
+      "w": 250,
+      "h": 180,
+      "title": "יעדים",
+      "color": "#228be6",
+      "items": []
+    },
+    {
+      "id": "2",
+      "type": "section",
+      "x": 320,
+      "y": 50,
+      "w": 250,
+      "h": 180,
+      "title": "משימות",
+      "color": "#f59f00",
+      "items": [
+        "Add toast notifications for file changes",
+        "Add quick-launch for VS Code (`code .`)",
+        "Add quick-launch for dev server (`npm run dev`)",
+        "Add git pull/push quick actions",
+        "Add search/filter for projects"
+      ]
+    },
+    {
+      "id": "3",
+      "type": "section",
+      "x": 590,
+      "y": 50,
+      "w": 250,
+      "h": 180,
+      "title": "רעיונות",
+      "color": "#be4bdb",
+      "items": []
+    },
+    {
+      "id": "4",
+      "type": "section",
+      "x": 50,
+      "y": 260,
+      "w": 250,
+      "h": 180,
+      "title": "הערות",
+      "color": "#2f9e44",
+      "items": []
+    },
+    {
+      "id": "5",
+      "type": "section",
+      "x": 320,
+      "y": 260,
+      "w": 250,
+      "h": 180,
+      "title": "חסימות",
+      "color": "#e03131",
+      "items": []
+    },
+    {
+      "id": "6",
+      "type": "section",
+      "x": 590,
+      "y": 260,
+      "w": 250,
+      "h": 180,
+      "title": "הושלם",
+      "color": "#868e96",
+      "items": [
+        "תיקון שגיאת EPIPE",
+        "עיצוב Premium Glass עם Tailwind",
+        "הוספת אנימציות Motion",
+        "בניית האפליקציה ל-macOS"
+      ]
+    }
+  ],
+  "notes": []
+}

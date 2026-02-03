@@ -70,6 +70,11 @@ npm run uninstall-app  # Remove from /Applications
 | Notifications | 📝 | Planned |
 | Quick Actions (VS Code, dev) | 📝 | Planned |
 | תכונה בדיקה | 🔄 בעבודה |
+| Add toast notifications for file changes | 📝 מתוכנן |
+| Add quick-launch for VS Code (`code .`) | 📝 מתוכנן |
+| Add quick-launch for dev server (`npm run dev`) | 📝 מתוכנן |
+| Add git pull/push quick actions | 📝 מתוכנן |
+| Add search/filter for projects | 📝 מתוכנן |
 
 **Legend:** ✅ Complete | 🔄 In Progress | 📝 Planned
 
@@ -129,6 +134,23 @@ npm run uninstall-app  # Remove from /Applications
 *Update this file at the end of each development session.*
 
 ## Work Session Log
+
+### 03.02.2026, 20:08
+סשן עבודה - 3.2.2026
+
+**פיצ׳רים:**
+- 📝 Add toast notifications for file changes
+- 📝 Add quick-launch for VS Code (`code .`)
+- 📝 Add quick-launch for dev server (`npm run dev`)
+- 📝 Add git pull/push quick actions
+- 📝 Add search/filter for projects
+
+**משימות שהושלמו:**
+- ✅ תיקון שגיאת EPIPE
+- ✅ עיצוב Premium Glass עם Tailwind
+- ✅ הוספת אנימציות Motion
+- ✅ בניית האפליקציה ל-macOS
+
 
 ### 03.02.2026, 19:36
 בדיקת פונקציית שמירת סשן

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Map - מפת פרויקטים</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: white;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    #excalidraw-container {
+      width: 100vw;
+      height: 100vh;
+    }
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      gap: 20px;
+    }
+    .loading h1 {
+      font-size: 24px;
+      color: #a5d8ff;
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #333;
+      border-top-color: #a5d8ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="excalidraw-container">
+    <div class="loading">
+      <div class="spinner"></div>
+      <h1>טוען מפת פרויקטים...</h1>
+    </div>
+  </div>
+
+  <script type="module">
+    // Load Excalidraw from CDN
+    import { createRoot } from 'https://esm.sh/react-dom@18/client';
+    import React from 'https://esm.sh/react@18';
+
+    // Get the data from URL parameter or load from file
+    const urlParams = new URLSearchParams(window.location.search);
+    const dataPath = urlParams.get('file');
+
+    async function loadExcalidraw() {
+      try {
+        // Dynamically import Excalidraw
+        const { Excalidraw } = await import('https://esm.sh/@excalidraw/excalidraw');
+
+        let initialData = { elements: [], appState: { viewBackgroundColor: '#1a1a2e' } };
+
+        if (dataPath) {
+          try {
+            const response = await fetch(dataPath);
+            const data = await response.json();
+            initialData = {
+              elements: data.elements || [],
+              appState: {
+                ...data.appState,
+                viewBackgroundColor: data.appState?.viewBackgroundColor || '#1a1a2e',
+                theme: 'dark',
+              },
+            };
+          } catch (e) {
+            console.error('Failed to load data:', e);
+          }
+        }
+
+        const container = document.getElementById('excalidraw-container');
+        container.innerHTML = '';
+
+        const root = createRoot(container);
+        root.render(
+          React.createElement(Excalidraw, {
+            initialData,
+            theme: 'dark',
+            langCode: 'he-IL',
+          })
+        );
+      } catch (error) {
+        console.error('Failed to load Excalidraw:', error);
+        document.getElementById('excalidraw-container').innerHTML = `
+          <div class="loading">
+            <h1>שגיאה בטעינת המפה</h1>
+            <p style="color: #ff6b6b">${error.message}</p>
+            <p style="margin-top: 20px">
+              <a href="https://excalidraw.com" target="_blank" style="color: #a5d8ff">
+                פתח את Excalidraw ידנית
+              </a>
+            </p>
+          </div>
+        `;
+      }
+    }
+
+    loadExcalidraw();
+  </script>
+</body>
+</html>
