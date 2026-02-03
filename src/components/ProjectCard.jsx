@@ -8,6 +8,7 @@ function isHebrew(text) {
 function ProjectCard({ project, onClick }) {
   const hasUncommitted = project.uncommittedChanges > 0;
   const hasRemainingTasks = project.remainingTasks?.length > 0;
+  const claudeLive = project.claudeLive;
 
   const getStatus = () => {
     if (hasUncommitted) return { color: 'orange', label: 'שינויים' };
@@ -15,6 +16,20 @@ function ProjectCard({ project, onClick }) {
     return { color: 'green', label: 'מעודכן' };
   };
 
+  // Claude live status indicator
+  const getClaudeStatus = () => {
+    if (!claudeLive) return null;
+    const statusMap = {
+      working: { color: 'bg-blue-500', pulse: true, label: 'Claude עובד' },
+      waiting: { color: 'bg-yellow-500', pulse: true, label: 'מחכה לקלט' },
+      done: { color: 'bg-green-500', pulse: false, label: 'סיים' },
+      error: { color: 'bg-red-500', pulse: true, label: 'שגיאה' },
+      idle: { color: 'bg-gray-500', pulse: false, label: 'לא פעיל' },
+    };
+    return statusMap[claudeLive.status] || null;
+  };
+
+  const claudeStatus = getClaudeStatus();
   const status = getStatus();
   const commitMessage = project.lastCommit?.message || '';
   const messageDir = isHebrew(commitMessage) ? 'rtl' : 'ltr';
@@ -56,20 +71,40 @@ function ProjectCard({ project, onClick }) {
       <div className="flex items-center justify-between mb-3 pr-4 relative z-10">
         <div className="flex items-center gap-3">
           {/* Project Icon */}
-          <motion.div
-            className="icon-wrapper w-11 h-11 rounded-xl flex items-center justify-center relative overflow-hidden"
-            whileHover={{ scale: 1.1, rotate: 5 }}
-            transition={{ type: 'spring', stiffness: 400 }}
-          >
-            <span className="text-white/80 font-semibold text-sm tracking-wide relative z-10">
-              {project.name.substring(0, 2).toUpperCase()}
-            </span>
+          <div className="relative">
             <motion.div
-              className="absolute inset-0 bg-gradient-to-br from-blue-500/30 to-purple-500/30"
-              initial={{ opacity: 0 }}
-              whileHover={{ opacity: 1 }}
-            />
-          </motion.div>
+              className="icon-wrapper w-11 h-11 rounded-xl flex items-center justify-center relative overflow-hidden"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              transition={{ type: 'spring', stiffness: 400 }}
+            >
+              <span className="text-white/80 font-semibold text-sm tracking-wide relative z-10">
+                {project.name.substring(0, 2).toUpperCase()}
+              </span>
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-br from-blue-500/30 to-purple-500/30"
+                initial={{ opacity: 0 }}
+                whileHover={{ opacity: 1 }}
+              />
+            </motion.div>
+            {/* Claude Live Status Indicator */}
+            {claudeStatus && (
+              <motion.div
+                className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${claudeStatus.color} border-2 border-[#0d0d12] flex items-center justify-center`}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                title={claudeStatus.label}
+              >
+                {claudeStatus.pulse && (
+                  <motion.div
+                    className={`absolute inset-0 rounded-full ${claudeStatus.color}`}
+                    animate={{ scale: [1, 1.5, 1], opacity: [1, 0, 1] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  />
+                )}
+                <span className="text-[8px] text-white font-bold">🤖</span>
+              </motion.div>
+            )}
+          </div>
 
           {/* Project Info */}
           <div className="space-y-0.5">
@@ -114,8 +149,61 @@ function ProjectCard({ project, onClick }) {
         </div>
       )}
 
+      {/* Claude Live Status Banner */}
+      {claudeLive && claudeLive.status === 'working' && claudeLive.message && (
+        <motion.div
+          className="mb-3 px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 pr-4 relative z-10"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="flex items-center gap-2">
+            <motion.span
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+              className="text-sm"
+            >
+              🤖
+            </motion.span>
+            <span className="text-blue-400 text-xs font-medium truncate">
+              {claudeLive.message}
+            </span>
+          </div>
+        </motion.div>
+      )}
+
       {/* Stats Badges */}
-      <div className="flex items-center gap-2 pr-4 relative z-10">
+      <div className="flex items-center gap-2 pr-4 relative z-10 flex-wrap">
+        {/* Claude Status Badge */}
+        {claudeLive && claudeLive.status !== 'idle' && (
+          <motion.div
+            className={`badge ${
+              claudeLive.status === 'working' ? 'badge-blue' :
+              claudeLive.status === 'waiting' ? 'badge-yellow' :
+              claudeLive.status === 'done' ? 'badge-green' :
+              claudeLive.status === 'error' ? 'badge-red' : ''
+            }`}
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            whileHover={{ scale: 1.05 }}
+          >
+            <motion.span
+              className={`w-1.5 h-1.5 rounded-full ${
+                claudeLive.status === 'working' ? 'bg-blue-400' :
+                claudeLive.status === 'waiting' ? 'bg-yellow-400' :
+                claudeLive.status === 'done' ? 'bg-green-400' :
+                claudeLive.status === 'error' ? 'bg-red-400' : 'bg-gray-400'
+              }`}
+              animate={claudeLive.status !== 'done' ? { opacity: [1, 0.5, 1] } : {}}
+              transition={{ duration: 1, repeat: Infinity }}
+            />
+            <span>
+              {claudeLive.status === 'working' ? '🤖 עובד' :
+               claudeLive.status === 'waiting' ? '⏳ מחכה' :
+               claudeLive.status === 'done' ? '✅ סיים' :
+               claudeLive.status === 'error' ? '❌ שגיאה' : ''}
+            </span>
+          </motion.div>
+        )}
         {hasRemainingTasks && (
           <motion.div
             className="badge badge-yellow"
@@ -146,7 +234,7 @@ function ProjectCard({ project, onClick }) {
             <span>{project.uncommittedChanges} שינויים</span>
           </motion.div>
         )}
-        {!hasRemainingTasks && !hasUncommitted && (
+        {!hasRemainingTasks && !hasUncommitted && !claudeLive && (
           <motion.div
             className="badge badge-green"
             whileHover={{ scale: 1.05 }}

@@ -2,6 +2,22 @@ const simpleGit = require('simple-git');
 const fs = require('fs').promises;
 const path = require('path');
 
+// MCP Status file location
+const STATUS_FILE = path.join(process.env.HOME, '.project-dashboard', 'status.json');
+
+/**
+ * Read Claude live status from MCP status file
+ */
+async function readClaudeLiveStatus(projectPath) {
+  try {
+    const content = await fs.readFile(STATUS_FILE, 'utf-8');
+    const data = JSON.parse(content);
+    return data.projects?.[projectPath] || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 // Parse CLAUDE_STATE.md file to extract project info
 function parseClaudeStateMd(content) {
   const result = {
@@ -187,6 +203,9 @@ async function scanProject(projectPath) {
     // Prefer CLAUDE_STATE.md summary over legacy
     const summary = claudeStateMd.summary || claudeStatus.summary || null;
 
+    // Read Claude live status from MCP
+    const claudeLiveStatus = await readClaudeLiveStatus(projectPath);
+
     return {
       name,
       path: projectPath,
@@ -204,6 +223,8 @@ async function scanProject(projectPath) {
       techStack: claudeStateMd.techStack || [],
       currentStatus: claudeStateMd.currentStatus || {},
       knownIssues: claudeStateMd.knownIssues || [],
+      // Claude live status from MCP
+      claudeLive: claudeLiveStatus,
     };
   } catch (error) {
     return null;

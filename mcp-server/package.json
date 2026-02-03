@@ -1,0 +1,14 @@
+{
+  "name": "project-dashboard-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Project Dashboard - allows Claude to report working status",
+  "main": "index.js",
+  "bin": {
+    "project-dashboard-mcp": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": ["mcp", "claude", "dashboard"],
+  "license": "MIT"
+}
