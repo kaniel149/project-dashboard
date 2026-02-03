@@ -54,6 +54,7 @@ const { scanAllProjects } = require('./scanner');
 const { createWatcher } = require('./watcher');
 const { generateProjectMap } = require('./excalidraw-generator');
 const { generateMapEditor, saveProjectMap: saveProjectMapFile } = require('./project-map-editor');
+const { generateInteractiveMap } = require('./interactive-map');
 
 let mainWindow;
 let isCollapsed = false;
@@ -159,6 +160,20 @@ ipcMain.handle('open-terminal', (_, projectPath) => {
   return { success: true };
 });
 
+ipcMain.handle('open-claude', (_, projectPath) => {
+  // Open terminal and run claude/cx command in the project directory
+  const safePath = projectPath.replace(/"/g, '\\"');
+  // Use osascript to open Terminal, cd to directory, and run claude
+  const script = `
+    tell application "Terminal"
+      activate
+      do script "cd \\"${safePath}\\" && claude"
+    end tell
+  `;
+  exec(`osascript -e '${script.replace(/'/g, "'\\''")}'`);
+  return { success: true };
+});
+
 ipcMain.handle('generate-project-map', async () => {
   try {
     const projects = await scanAllProjects(PROJECTS_DIR);
@@ -183,13 +198,14 @@ ipcMain.handle('open-vscode', (_, projectPath) => {
 
 ipcMain.handle('open-project-map', async (_, projectPath, projectData) => {
   try {
-    const { generateWhiteboardHtml } = require('./simple-whiteboard');
-    const { htmlPath, isNew } = await generateWhiteboardHtml(projectPath, projectData);
+    // Use the new interactive map generator
+    const { htmlPath, mapData } = await generateInteractiveMap(projectPath);
 
     // Open in default browser
-    exec(`open "${htmlPath}"`);
+    const safePath = htmlPath.replace(/"/g, '\\"');
+    exec(`open "${safePath}"`);
 
-    return { success: true, path: htmlPath, isNew };
+    return { success: true, path: htmlPath, stats: mapData.stats };
   } catch (error) {
     return { success: false, error: error.message };
   }

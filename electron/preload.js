@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   refreshProjects: () => ipcRenderer.invoke('refresh-projects'),
   openTerminal: (projectPath) => ipcRenderer.invoke('open-terminal', projectPath),
   openVSCode: (projectPath) => ipcRenderer.invoke('open-vscode', projectPath),
+  openClaude: (projectPath) => ipcRenderer.invoke('open-claude', projectPath),
   generateProjectMap: () => ipcRenderer.invoke('generate-project-map'),
   openProjectMap: (projectPath, projectData) => ipcRenderer.invoke('open-project-map', projectPath, projectData),
   saveProjectMap: (projectPath, mapData) => ipcRenderer.invoke('save-project-map', projectPath, mapData),

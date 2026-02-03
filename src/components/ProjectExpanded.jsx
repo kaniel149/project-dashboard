@@ -45,6 +45,10 @@ function ProjectExpanded({ project, onClose }) {
     window.electronAPI?.openProjectMap(project.path, project);
   };
 
+  const handleOpenClaude = () => {
+    window.electronAPI?.openClaude(project.path);
+  };
+
   const sectionVariants = {
     hidden: { opacity: 0, y: 15 },
     visible: (i) => ({
@@ -316,6 +320,16 @@ function ProjectExpanded({ project, onClose }) {
             <span>מפה</span>
           </motion.button>
           <motion.button
+            onClick={handleOpenClaude}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#D97706]/20 border border-[#D97706]/30 text-[#F59E0B] text-sm font-medium"
+            whileHover={{ scale: 1.03, y: -1, backgroundColor: 'rgba(217, 119, 6, 0.3)' }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 400 }}
+          >
+            <ClaudeIcon />
+            <span>Claude</span>
+          </motion.button>
+          <motion.button
             onClick={handleOpenVSCode}
             className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#007ACC]/20 border border-[#007ACC]/30 text-[#007ACC] text-sm font-medium"
             whileHover={{ scale: 1.03, y: -1, backgroundColor: 'rgba(0, 122, 204, 0.3)' }}
@@ -393,6 +407,14 @@ function MapIcon() {
       <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
       <line x1="8" y1="2" x2="8" y2="18"/>
       <line x1="16" y1="6" x2="16" y2="22"/>
+    </svg>
+  );
+}
+
+function ClaudeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-4h-2V7h2v6zm4 4h-2v-2h2v2zm0-4h-2V7h2v6z"/>
     </svg>
   );
 }
