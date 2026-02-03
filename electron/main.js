@@ -145,6 +145,13 @@ ipcMain.handle('toggle-collapse', () => {
 });
 
 ipcMain.handle('get-collapsed-state', () => isCollapsed);
+
+ipcMain.handle('set-window-size', (_, width, height) => {
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  mainWindow.setSize(width, height);
+  mainWindow.setPosition(screenWidth - width - 20, screenHeight - height - 20);
+  return { success: true };
+});
 ipcMain.handle('refresh-projects', async () => {
   try {
     await scanAndSend();

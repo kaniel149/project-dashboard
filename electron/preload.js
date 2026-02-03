@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
   toggleCollapse: () => ipcRenderer.invoke('toggle-collapse'),
   getCollapsedState: () => ipcRenderer.invoke('get-collapsed-state'),
+  setWindowSize: (width, height) => ipcRenderer.invoke('set-window-size', width, height),
   onProjectsUpdate: (callback) => {
     const handler = (_, data) => callback(data);
     ipcRenderer.on('projects-update', handler);

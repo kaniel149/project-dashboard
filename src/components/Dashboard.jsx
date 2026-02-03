@@ -2,16 +2,24 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import ProjectCard from './ProjectCard';
 import ProjectExpanded from './ProjectExpanded';
+import GridView from './GridView';
 
 function Dashboard({ projects, onCollapse }) {
   const [expandedProject, setExpandedProject] = useState(null);
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
+  const [isGridFullscreen, setIsGridFullscreen] = useState(false);
 
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
+      animate={{
+        opacity: 1,
+        scale: 1,
+        width: isGridFullscreen && viewMode === 'grid' ? 800 : 420,
+        height: isGridFullscreen && viewMode === 'grid' ? 600 : 550,
+      }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="w-[420px] h-[550px] glass-container rounded-3xl flex flex-col overflow-hidden relative noise-overlay"
+      className="glass-container rounded-3xl flex flex-col overflow-hidden relative noise-overlay"
     >
       {/* Ambient glow effects */}
       <motion.div
@@ -67,21 +75,64 @@ function Dashboard({ projects, onCollapse }) {
           </div>
         </div>
 
-        {/* Map button */}
-        <motion.button
-          onClick={() => window.electronAPI?.generateProjectMap()}
-          className="no-drag px-3 py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white/60 text-xs font-medium flex items-center gap-1.5 hover:bg-white/[0.1] hover:text-white/80 transition-colors"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          title="צור מפת פרויקטים"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
-            <line x1="8" y1="2" x2="8" y2="18"/>
-            <line x1="16" y1="6" x2="16" y2="22"/>
-          </svg>
-          מפה
-        </motion.button>
+        {/* View Toggle & Map Buttons */}
+        <div className="flex items-center gap-2 no-drag">
+          {/* View Toggle */}
+          <div className="flex rounded-lg bg-white/[0.06] border border-white/[0.08] p-0.5">
+            <motion.button
+              onClick={() => setViewMode('list')}
+              className={`px-2 py-1 rounded-md text-xs transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-white/10 text-white'
+                  : 'text-white/40 hover:text-white/60'
+              }`}
+              whileTap={{ scale: 0.95 }}
+              title="תצוגת רשימה"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="8" y1="6" x2="21" y2="6"/>
+                <line x1="8" y1="12" x2="21" y2="12"/>
+                <line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="3.01" y2="6"/>
+                <line x1="3" y1="12" x2="3.01" y2="12"/>
+                <line x1="3" y1="18" x2="3.01" y2="18"/>
+              </svg>
+            </motion.button>
+            <motion.button
+              onClick={() => setViewMode('grid')}
+              className={`px-2 py-1 rounded-md text-xs transition-colors ${
+                viewMode === 'grid'
+                  ? 'bg-white/10 text-white'
+                  : 'text-white/40 hover:text-white/60'
+              }`}
+              whileTap={{ scale: 0.95 }}
+              title="תצוגת Grid"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+            </motion.button>
+          </div>
+
+          {/* Map button */}
+          <motion.button
+            onClick={() => window.electronAPI?.generateProjectMap()}
+            className="px-3 py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white/60 text-xs font-medium flex items-center gap-1.5 hover:bg-white/[0.1] hover:text-white/80 transition-colors"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            title="צור מפת פרויקטים"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+              <line x1="8" y1="2" x2="8" y2="18"/>
+              <line x1="16" y1="6" x2="16" y2="22"/>
+            </svg>
+            מפה
+          </motion.button>
+        </div>
       </motion.div>
 
       {/* Content */}
@@ -98,6 +149,31 @@ function Dashboard({ projects, onCollapse }) {
               <ProjectExpanded
                 project={expandedProject}
                 onClose={() => setExpandedProject(null)}
+              />
+            </motion.div>
+          ) : viewMode === 'grid' ? (
+            <motion.div
+              key="grid"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="h-full"
+            >
+              <GridView
+                projects={projects}
+                onSelectProject={(project) => setExpandedProject(project)}
+                isFullscreen={isGridFullscreen}
+                onToggleFullscreen={() => {
+                  const newFullscreen = !isGridFullscreen;
+                  setIsGridFullscreen(newFullscreen);
+                  // Resize Electron window
+                  if (newFullscreen) {
+                    window.electronAPI?.setWindowSize(800, 600);
+                  } else {
+                    window.electronAPI?.setWindowSize(420, 550);
+                  }
+                }}
               />
             </motion.div>
           ) : (
@@ -144,7 +220,7 @@ function Dashboard({ projects, onCollapse }) {
           )}
         </AnimatePresence>
 
-        {projects.length === 0 && (
+        {projects.length === 0 && viewMode === 'list' && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}

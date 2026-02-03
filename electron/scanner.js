@@ -4,15 +4,81 @@ const path = require('path');
 
 // MCP Status file location
 const STATUS_FILE = path.join(process.env.HOME, '.project-dashboard', 'status.json');
+const { exec } = require('child_process');
+const { promisify } = require('util');
+const execAsync = promisify(exec);
+
+// Cache for active Claude processes (refresh every 10 seconds)
+let claudeProcessCache = { data: {}, lastUpdate: 0 };
+const CACHE_TTL = 10000; // 10 seconds
 
 /**
- * Read Claude live status from MCP status file
+ * Detect active Claude processes by checking running processes
+ */
+async function detectActiveClaudeProcesses() {
+  const now = Date.now();
+  if (now - claudeProcessCache.lastUpdate < CACHE_TTL) {
+    return claudeProcessCache.data;
+  }
+
+  const activeProjects = {};
+
+  try {
+    // Get Claude process PIDs
+    const { stdout: pidsOut } = await execAsync(
+      `pgrep -f "claude.*skip-permissions" 2>/dev/null || echo ""`,
+      { timeout: 5000 }
+    );
+
+    const pids = pidsOut.split('\n').filter(Boolean);
+
+    // Get working directory for each PID using lsof
+    for (const pid of pids.slice(0, 10)) {
+      try {
+        const { stdout: cwdOut } = await execAsync(
+          `lsof -p ${pid} 2>/dev/null | grep cwd | awk '{print $NF}'`,
+          { timeout: 3000 }
+        );
+
+        const cwd = cwdOut.trim();
+        if (cwd && cwd.includes('/projects/')) {
+          activeProjects[cwd] = {
+            status: 'working',
+            message: 'Claude פעיל',
+            detectedAt: new Date().toISOString(),
+          };
+        }
+      } catch (e) {
+        // Skip this PID
+      }
+    }
+
+    claudeProcessCache = { data: activeProjects, lastUpdate: now };
+    return activeProjects;
+  } catch (e) {
+    return claudeProcessCache.data;
+  }
+}
+
+/**
+ * Read Claude live status from MCP status file + process detection
  */
 async function readClaudeLiveStatus(projectPath) {
   try {
+    // First check MCP status file
     const content = await fs.readFile(STATUS_FILE, 'utf-8');
     const data = JSON.parse(content);
-    return data.projects?.[projectPath] || null;
+    if (data.projects?.[projectPath]) {
+      return data.projects[projectPath];
+    }
+  } catch (e) {
+    // File doesn't exist
+  }
+
+  // Fallback to process detection
+  try {
+    const activeProcesses = await detectActiveClaudeProcesses();
+    return activeProcesses[projectPath] || null;
   } catch (e) {
     return null;
   }
