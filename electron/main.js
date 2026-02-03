@@ -162,13 +162,13 @@ ipcMain.handle('open-terminal', (_, projectPath) => {
 });
 
 ipcMain.handle('open-claude', (_, projectPath) => {
-  // Open terminal and run claude/cx command in the project directory
+  // Open terminal and run cx command in the project directory
   const safePath = projectPath.replace(/"/g, '\\"');
-  // Use osascript to open Terminal, cd to directory, and run claude
+  // Use osascript to open Terminal, cd to directory, and run cx
   const script = `
     tell application "Terminal"
       activate
-      do script "cd \\"${safePath}\\" && claude"
+      do script "cd \\"${safePath}\\" && cx"
     end tell
   `;
   exec(`osascript -e '${script.replace(/'/g, "'\\''")}'`);

@@ -411,66 +411,65 @@ function ProjectExpanded({ project, onClose }) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="px-4 py-3 border-t border-white/[0.06] bg-gradient-to-r from-white/[0.02] to-transparent flex items-center justify-between"
+        className="px-4 py-3 border-t border-white/[0.06] bg-gradient-to-r from-white/[0.02] to-transparent"
       >
-        <div className="text-xs text-white/25 flex items-center gap-3">
+        {/* Info Row */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-xs text-white/25 flex items-center gap-3">
+            <span className="bg-white/[0.06] border border-white/[0.08] px-2.5 py-1 rounded-lg font-mono text-white/40">
+              {project.branch}
+            </span>
+            <span className="text-white/20">
+              עדכון {formatTimeAgo(project.lastActivity)}
+            </span>
+          </div>
           <motion.button
             onClick={() => setShowSessionModal(true)}
-            className="bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg text-emerald-400/80 hover:bg-emerald-500/20 transition-colors"
+            className="bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg text-emerald-400/80 text-xs hover:bg-emerald-500/20 transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             💾 שמור סשן
           </motion.button>
-          <span className="bg-white/[0.06] border border-white/[0.08] px-2.5 py-1 rounded-lg font-mono text-white/40">
-            {project.branch}
-          </span>
-          <span className="text-white/20">
-            עדכון {formatTimeAgo(project.lastActivity)}
-          </span>
         </div>
-        <div className="flex items-center gap-2">
+
+        {/* Actions Row */}
+        <div className="flex items-center justify-center gap-2">
           <motion.button
             onClick={handleOpenMap}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-purple-500/20 border border-purple-500/30 text-purple-400 text-sm font-medium"
-            whileHover={{ scale: 1.03, y: -1, backgroundColor: 'rgba(168, 85, 247, 0.3)' }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ type: 'spring', stiffness: 400 }}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs font-medium flex-1"
+            whileHover={{ scale: 1.02, backgroundColor: 'rgba(168, 85, 247, 0.3)' }}
+            whileTap={{ scale: 0.98 }}
           >
             <MapIcon />
             <span>מפה</span>
           </motion.button>
           <motion.button
             onClick={handleOpenClaude}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#D97706]/20 border border-[#D97706]/30 text-[#F59E0B] text-sm font-medium"
-            whileHover={{ scale: 1.03, y: -1, backgroundColor: 'rgba(217, 119, 6, 0.3)' }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ type: 'spring', stiffness: 400 }}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#D97706]/20 border border-[#D97706]/30 text-[#F59E0B] text-xs font-medium flex-1"
+            whileHover={{ scale: 1.02, backgroundColor: 'rgba(217, 119, 6, 0.3)' }}
+            whileTap={{ scale: 0.98 }}
           >
             <ClaudeIcon />
             <span>Claude</span>
           </motion.button>
           <motion.button
             onClick={handleOpenVSCode}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#007ACC]/20 border border-[#007ACC]/30 text-[#007ACC] text-sm font-medium"
-            whileHover={{ scale: 1.03, y: -1, backgroundColor: 'rgba(0, 122, 204, 0.3)' }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ type: 'spring', stiffness: 400 }}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#007ACC]/20 border border-[#007ACC]/30 text-[#007ACC] text-xs font-medium flex-1"
+            whileHover={{ scale: 1.02, backgroundColor: 'rgba(0, 122, 204, 0.3)' }}
+            whileTap={{ scale: 0.98 }}
           >
             <VSCodeIcon />
-            <span>VS Code</span>
+            <span>Code</span>
           </motion.button>
           <motion.button
             onClick={handleOpenTerminal}
-            className="btn-premium flex items-center gap-2 px-3 py-2 rounded-xl text-white text-sm font-medium relative overflow-hidden"
-            whileHover={{ scale: 1.03, y: -1 }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ type: 'spring', stiffness: 400 }}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white/80 text-xs font-medium flex-1"
+            whileHover={{ scale: 1.02, backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+            whileTap={{ scale: 0.98 }}
           >
-            <span className="relative z-10 flex items-center gap-2">
-              <TerminalIcon />
-              <span>טרמינל</span>
-            </span>
+            <TerminalIcon />
+            <span>Terminal</span>
           </motion.button>
         </div>
       </motion.div>
