@@ -318,7 +318,16 @@ function parseTodoMd(content) {
 }
 
 // Category folders that contain projects (not projects themselves)
-const CATEGORY_FOLDERS = ['business-projects', 'personal-projects', 'archive'];
+const CATEGORY_FOLDERS = [
+  'business-projects',
+  'personal-projects',
+  'integrations',
+  'dev-tools',
+  'content-systems',
+  'frameworks',
+  'media-projects',
+  'archive'
+];
 
 async function scanAllProjects(projectsDir, depth = 0) {
   try {
