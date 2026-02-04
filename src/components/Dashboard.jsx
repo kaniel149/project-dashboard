@@ -7,7 +7,7 @@ import GitView from './GitView';
 import GroupCard from './GroupCard';
 import { groupProjectsByPrefix } from '../utils/groupProjects';
 
-function Dashboard({ projects, onCollapse }) {
+function Dashboard({ projects, onCollapse, isWebMode = false }) {
   const [expandedProject, setExpandedProject] = useState(null);
   const [viewMode, setViewMode] = useState('list'); // 'list', 'grid', or 'git'
   const [isGridFullscreen, setIsGridFullscreen] = useState(false);
@@ -18,14 +18,25 @@ function Dashboard({ projects, onCollapse }) {
     [projects]
   );
 
+  // Web mode: responsive sizing
+  const containerStyle = isWebMode
+    ? {
+        width: '100%',
+        maxWidth: isGridFullscreen ? '900px' : '500px',
+        height: isGridFullscreen ? '80vh' : '600px',
+      }
+    : {
+        width: isGridFullscreen && (viewMode === 'grid' || viewMode === 'git') ? 800 : 420,
+        height: isGridFullscreen && (viewMode === 'grid' || viewMode === 'git') ? 600 : 550,
+      };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{
         opacity: 1,
         scale: 1,
-        width: isGridFullscreen && (viewMode === 'grid' || viewMode === 'git') ? 800 : 420,
-        height: isGridFullscreen && (viewMode === 'grid' || viewMode === 'git') ? 600 : 550,
+        ...containerStyle,
       }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       className="glass-container rounded-3xl flex flex-col overflow-hidden relative noise-overlay"

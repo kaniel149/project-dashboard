@@ -5,10 +5,14 @@
   "main": "electron/main.js",
   "scripts": {
     "dev": "concurrently \"vite --port 5173 --strictPort\" \"wait-on http://localhost:5173 && electron .\"",
+    "dev:web": "vite --port 5173",
+    "dev:vercel": "vercel dev",
     "build": "vite build && electron-builder",
+    "build:web": "vite build",
     "start": "electron .",
     "install-app": "bash scripts/install.sh",
-    "uninstall-app": "bash scripts/uninstall.sh"
+    "uninstall-app": "bash scripts/uninstall.sh",
+    "deploy": "vercel --prod"
   },
   "keywords": [],
   "author": "",

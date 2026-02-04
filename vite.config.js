@@ -9,5 +9,12 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // Proxy API calls to Vercel dev server in development
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+    },
   },
 });
