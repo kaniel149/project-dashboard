@@ -1,14 +1,22 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import ProjectCard from './ProjectCard';
 import ProjectExpanded from './ProjectExpanded';
 import GridView from './GridView';
 import GitView from './GitView';
+import GroupCard from './GroupCard';
+import { groupProjectsByPrefix } from '../utils/groupProjects';
 
 function Dashboard({ projects, onCollapse }) {
   const [expandedProject, setExpandedProject] = useState(null);
   const [viewMode, setViewMode] = useState('list'); // 'list', 'grid', or 'git'
   const [isGridFullscreen, setIsGridFullscreen] = useState(false);
+
+  // Group projects by prefix
+  const { groups, standalone } = useMemo(
+    () => groupProjectsByPrefix(projects),
+    [projects]
+  );
 
   return (
     <motion.div
@@ -233,19 +241,51 @@ function Dashboard({ projects, onCollapse }) {
                   className="flex items-center justify-between px-2 pb-3"
                 >
                   <span className="text-white/30 text-xs font-medium tracking-wide">
-                    {projects.length} פרויקטים פעילים
+                    {projects.length} פרויקטים • {groups.length} קבוצות
                   </span>
                   <div className="h-px flex-1 mx-3 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
                 </motion.div>
               )}
 
-              {projects.map((project, index) => (
+              {/* Grouped Projects */}
+              {groups.map((group, index) => (
+                <motion.div
+                  key={group.id}
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{
+                    delay: index * 0.08,
+                    type: 'spring',
+                    stiffness: 200,
+                    damping: 20,
+                  }}
+                >
+                  <GroupCard
+                    group={group}
+                    onSelectProject={(project) => setExpandedProject(project)}
+                  />
+                </motion.div>
+              ))}
+
+              {/* Standalone Projects */}
+              {standalone.length > 0 && groups.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex items-center justify-between px-2 py-3 mt-2"
+                >
+                  <span className="text-white/20 text-xs font-medium">פרויקטים בודדים</span>
+                  <div className="h-px flex-1 mx-3 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent" />
+                </motion.div>
+              )}
+
+              {standalone.map((project, index) => (
                 <motion.div
                   key={project.path}
                   initial={{ opacity: 0, y: 20, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{
-                    delay: index * 0.08,
+                    delay: (groups.length + index) * 0.08,
                     type: 'spring',
                     stiffness: 200,
                     damping: 20,
