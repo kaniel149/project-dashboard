@@ -329,10 +329,17 @@ const CATEGORY_FOLDERS = [
   'archive'
 ];
 
+async function scanProjectBatch(paths) {
+  return Promise.all(paths.map(p => scanProject(p).catch(() => null)));
+}
+
 async function scanAllProjects(projectsDir, depth = 0) {
   try {
     const entries = await fs.readdir(projectsDir, { withFileTypes: true });
-    const projects = [];
+
+    // Separate category folders from project folders
+    const categoryEntries = [];
+    const projectPaths = [];
 
     for (const entry of entries) {
       if (!entry.isDirectory() || entry.name.startsWith('.')) {
@@ -341,26 +348,45 @@ async function scanAllProjects(projectsDir, depth = 0) {
 
       const entryPath = path.join(projectsDir, entry.name);
 
-      // Check if this is a category folder that contains projects
       if (CATEGORY_FOLDERS.includes(entry.name) && depth === 0) {
-        // Recursively scan this category folder
-        const subProjects = await scanAllProjects(entryPath, depth + 1);
-        // Add category prefix to project names for clarity
-        subProjects.forEach(p => {
-          p.category = entry.name;
-        });
-        projects.push(...subProjects);
+        categoryEntries.push(entry);
       } else {
-        // This is a project folder, scan it
-        const project = await scanProject(entryPath);
+        projectPaths.push({ path: entryPath, category: depth > 0 ? path.basename(projectsDir) : undefined });
+      }
+    }
+
+    // Scan category folders in parallel to collect their project paths
+    const categoryResults = await Promise.all(
+      categoryEntries.map(async (entry) => {
+        const entryPath = path.join(projectsDir, entry.name);
+        const subProjects = await scanAllProjects(entryPath, depth + 1);
+        subProjects.forEach(p => { p.category = entry.name; });
+        return subProjects;
+      })
+    );
+
+    // Scan project folders in batches of 5
+    const BATCH_SIZE = 5;
+    const projects = [];
+
+    for (let i = 0; i < projectPaths.length; i += BATCH_SIZE) {
+      const batch = projectPaths.slice(i, i + BATCH_SIZE);
+      const results = await scanProjectBatch(batch.map(b => b.path));
+
+      for (let j = 0; j < results.length; j++) {
+        const project = results[j];
         if (project) {
-          if (depth > 0) {
-            // This project is inside a category folder
-            project.category = path.basename(projectsDir);
+          if (batch[j].category) {
+            project.category = batch[j].category;
           }
           projects.push(project);
         }
       }
+    }
+
+    // Add category sub-projects
+    for (const catProjects of categoryResults) {
+      projects.push(...catProjects);
     }
 
     // Sort by last activity (most recent first)

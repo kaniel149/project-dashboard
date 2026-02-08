@@ -56,14 +56,16 @@ const { generateProjectMap } = require('./excalidraw-generator');
 const { generateMapEditor, saveProjectMap: saveProjectMapFile } = require('./project-map-editor');
 const { generateInteractiveMap } = require('./interactive-map');
 const { updateClaudeState } = require('./project-scanner');
+const { getCodeStats } = require('./code-stats');
+const { trackProjectOpen, trackProjectFocus, getSessionData } = require('./session-tracker');
 
 let mainWindow;
 let isCollapsed = false;
 let watcher;
 
 const PROJECTS_DIR = path.join(process.env.HOME, 'Desktop', 'projects');
-const EXPANDED_WIDTH = 420;
-const EXPANDED_HEIGHT = 550;
+const EXPANDED_WIDTH = 1200;
+const EXPANDED_HEIGHT = 800;
 const COLLAPSED_WIDTH = 60;
 const COLLAPSED_HEIGHT = 60;
 
@@ -234,6 +236,30 @@ ipcMain.handle('update-project-state', async (_, projectPath, changes) => {
     return result;
   } catch (error) {
     return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('get-code-stats', async (_, projectPath) => {
+  try {
+    return await getCodeStats(projectPath);
+  } catch (error) {
+    return { totalFiles: 0, totalLines: 0, languages: {}, lastScanned: null, error: error.message };
+  }
+});
+
+ipcMain.handle('track-project-open', async (_, projectPath) => {
+  try {
+    return trackProjectOpen(projectPath);
+  } catch (error) {
+    return null;
+  }
+});
+
+ipcMain.handle('get-session-data', async () => {
+  try {
+    return getSessionData();
+  } catch (error) {
+    return {};
   }
 });
 

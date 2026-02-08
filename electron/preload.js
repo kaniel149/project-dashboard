@@ -18,4 +18,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openProjectMap: (projectPath, projectData) => ipcRenderer.invoke('open-project-map', projectPath, projectData),
   saveProjectMap: (projectPath, mapData) => ipcRenderer.invoke('save-project-map', projectPath, mapData),
   updateProjectState: (projectPath, changes) => ipcRenderer.invoke('update-project-state', projectPath, changes),
+  getCodeStats: (projectPath) => ipcRenderer.invoke('get-code-stats', projectPath),
+  trackProjectOpen: (projectPath) => ipcRenderer.invoke('track-project-open', projectPath),
+  getSessionData: () => ipcRenderer.invoke('get-session-data'),
 });
