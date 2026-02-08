@@ -1,0 +1,275 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "project-dashboard",
+    "path": "/Users/kanieltordjman/Desktop/projects/project-dashboard",
+    "scannedAt": "2026-02-03T12:36:28.212Z",
+    "projectType": "react",
+    "framework": "react"
+  },
+  "nodes": [
+    {
+      "id": "header-components",
+      "type": "header",
+      "layer": "component",
+      "name": "🧩 קומפוננטות",
+      "x": 50,
+      "y": 100,
+      "width": 800,
+      "height": 30
+    },
+    {
+      "id": "component-Dashboard",
+      "type": "node",
+      "layer": "component",
+      "name": "Dashboard",
+      "subtitle": "176 שורות • 1 פונקציות",
+      "filePath": "/Users/kanieltordjman/Desktop/projects/project-dashboard/src/components/Dashboard.jsx",
+      "relativePath": "Dashboard.jsx",
+      "status": "done",
+      "todoCount": 0,
+      "functions": [
+        "Dashboard"
+      ],
+      "colors": {
+        "bg": "#dbeafe",
+        "border": "#3b82f6",
+        "text": "#1d4ed8"
+      },
+      "x": 50,
+      "y": 150,
+      "width": 200,
+      "height": 120
+    },
+    {
+      "id": "component-MiniIcon",
+      "type": "node",
+      "layer": "component",
+      "name": "Mini Icon",
+      "subtitle": "108 שורות • 1 פונקציות",
+      "filePath": "/Users/kanieltordjman/Desktop/projects/project-dashboard/src/components/MiniIcon.jsx",
+      "relativePath": "MiniIcon.jsx",
+      "status": "done",
+      "todoCount": 0,
+      "functions": [
+        "MiniIcon"
+      ],
+      "colors": {
+        "bg": "#dbeafe",
+        "border": "#3b82f6",
+        "text": "#1d4ed8"
+      },
+      "x": 290,
+      "y": 150,
+      "width": 200,
+      "height": 120
+    },
+    {
+      "id": "component-ProjectCard",
+      "type": "node",
+      "layer": "component",
+      "name": "Project Card",
+      "subtitle": "178 שורות • 2 פונקציות",
+      "filePath": "/Users/kanieltordjman/Desktop/projects/project-dashboard/src/components/ProjectCard.jsx",
+      "relativePath": "ProjectCard.jsx",
+      "status": "done",
+      "todoCount": 0,
+      "functions": [
+        "isHebrew",
+        "ProjectCard"
+      ],
+      "colors": {
+        "bg": "#dbeafe",
+        "border": "#3b82f6",
+        "text": "#1d4ed8"
+      },
+      "x": 530,
+      "y": 150,
+      "width": 200,
+      "height": 120
+    },
+    {
+      "id": "component-ProjectExpanded",
+      "type": "node",
+      "layer": "component",
+      "name": "Project Expanded",
+      "subtitle": "544 שורות • 7 פונקציות",
+      "filePath": "/Users/kanieltordjman/Desktop/projects/project-dashboard/src/components/ProjectExpanded.jsx",
+      "relativePath": "ProjectExpanded.jsx",
+      "status": "done",
+      "todoCount": 0,
+      "functions": [
+        "isHebrew",
+        "ProjectExpanded",
+        "Section",
+        "TerminalIcon",
+        "VSCodeIcon",
+        "MapIcon",
+        "ClaudeIcon"
+      ],
+      "colors": {
+        "bg": "#dbeafe",
+        "border": "#3b82f6",
+        "text": "#1d4ed8"
+      },
+      "x": 770,
+      "y": 150,
+      "width": 200,
+      "height": 120
+    },
+    {
+      "id": "component-TaskList",
+      "type": "node",
+      "layer": "component",
+      "name": "Task List",
+      "subtitle": "77 שורות • 2 פונקציות",
+      "filePath": "/Users/kanieltordjman/Desktop/projects/project-dashboard/src/components/TaskList.jsx",
+      "relativePath": "TaskList.jsx",
+      "status": "done",
+      "todoCount": 0,
+      "functions": [
+        "isHebrew",
+        "TaskList"
+      ],
+      "colors": {
+        "bg": "#dbeafe",
+        "border": "#3b82f6",
+        "text": "#1d4ed8"
+      },
+      "x": 50,
+      "y": 310,
+      "width": 200,
+      "height": 120
+    },
+    {
+      "id": "header-features",
+      "type": "header",
+      "layer": "feature",
+      "name": "✨ פיצ'רים ויעדים",
+      "x": 50,
+      "y": 530,
+      "width": 800,
+      "height": 30
+    },
+    {
+      "id": "feature-0",
+      "type": "node",
+      "layer": "feature",
+      "name": "~~Complete Git status display for all projects~~ ✅",
+      "subtitle": "",
+      "status": "planned",
+      "colors": {
+        "bg": "#d1fae5",
+        "border": "#10b981",
+        "text": "#059669"
+      },
+      "x": 50,
+      "y": 580,
+      "width": 250,
+      "height": 80
+    },
+    {
+      "id": "feature-1",
+      "type": "node",
+      "layer": "feature",
+      "name": "Add real-time file change notifications (toast)",
+      "subtitle": "",
+      "status": "planned",
+      "colors": {
+        "bg": "#d1fae5",
+        "border": "#10b981",
+        "text": "#059669"
+      },
+      "x": 340,
+      "y": 580,
+      "width": 250,
+      "height": 80
+    },
+    {
+      "id": "feature-2",
+      "type": "node",
+      "layer": "feature",
+      "name": "~~Integrate with CLAUDE_STATE.md files~~ ✅",
+      "subtitle": "",
+      "status": "planned",
+      "colors": {
+        "bg": "#d1fae5",
+        "border": "#10b981",
+        "text": "#059669"
+      },
+      "x": 630,
+      "y": 580,
+      "width": 250,
+      "height": 80
+    },
+    {
+      "id": "feature-3",
+      "type": "node",
+      "layer": "feature",
+      "name": "Add quick-launch for project dev servers",
+      "subtitle": "",
+      "status": "planned",
+      "colors": {
+        "bg": "#d1fae5",
+        "border": "#10b981",
+        "text": "#059669"
+      },
+      "x": 920,
+      "y": 580,
+      "width": 250,
+      "height": 80
+    }
+  ],
+  "connections": [],
+  "customNodes": [],
+  "settings": {
+    "layers": {
+      "screen": {
+        "visible": true,
+        "label": "מסכים"
+      },
+      "component": {
+        "visible": true,
+        "label": "קומפוננטות"
+      },
+      "feature": {
+        "visible": true,
+        "label": "פיצ'רים"
+      },
+      "todo": {
+        "visible": true,
+        "label": "TODOs"
+      }
+    }
+  },
+  "stats": {
+    "totalScreens": 0,
+    "totalComponents": 5,
+    "totalTodos": 0,
+    "todosByType": {}
+  },
+  "claudeState": {
+    "exists": true,
+    "summary": "**Project Dashboard** is a desktop application built with Electron that provides a unified view of all projects. It tracks Git activity, displays project status, and helps manage development across multiple repositories.",
+    "status": {
+      "✅": "unknown",
+      "React UI": "done",
+      "Full status, commits, changed files": "unknown",
+      "Subdirectory Scanning": "done",
+      "Extracts summary, tech stack, issues": "unknown",
+      "progress.md Parsing": "done",
+      "Planned": "unknown",
+      "📝": "unknown",
+      "Quick Actions (VS Code, dev)": "planned",
+      "**Legend:** ✅ Complete": "in_progress"
+    },
+    "goals": [
+      "~~Complete Git status display for all projects~~ ✅",
+      "Add real-time file change notifications (toast)",
+      "~~Integrate with CLAUDE_STATE.md files~~ ✅",
+      "Add quick-launch for project dev servers"
+    ],
+    "issues": []
+  },
+  "rawScreens": []
+}
