@@ -23,6 +23,12 @@ import { chromium } from 'playwright';
     failedRequests.push({ url: req.url(), failure: req.failure()?.errorText });
   });
 
+  // Collect network requests
+  const networkRequests = [];
+  page.on('response', resp => {
+    networkRequests.push({ url: resp.url(), status: resp.status() });
+  });
+
   console.log('--- Navigating to http://localhost:5173 ---');
   try {
     await page.goto('http://localhost:5173', { waitUntil: 'networkidle', timeout: 15000 });
@@ -50,7 +56,6 @@ import { chromium } from 'playwright';
       backgroundColor: computed.backgroundColor,
       color: computed.color,
       className: body.className,
-      bodyHTML: body.innerHTML.substring(0, 2000),
     };
   });
   console.log('\n--- Body Styles ---');
@@ -65,7 +70,8 @@ import { chromium } from 'playwright';
     return {
       exists: true,
       childCount: root.children.length,
-      innerHTML: root.innerHTML.substring(0, 3000),
+      innerHTML: root.innerHTML.substring(0, 5000),
+      outerHTML: root.outerHTML.substring(0, 500),
       className: root.className,
       computedBg: window.getComputedStyle(root).backgroundColor,
     };
@@ -76,16 +82,21 @@ import { chromium } from 'playwright';
     console.log('Child count:', rootInfo.childCount);
     console.log('className:', rootInfo.className);
     console.log('Background:', rootInfo.computedBg);
-    console.log('innerHTML (first 3000 chars):', rootInfo.innerHTML);
+    console.log('outerHTML:', rootInfo.outerHTML);
+    console.log('innerHTML:', rootInfo.innerHTML || '(empty)');
   }
 
-  // Check for loaded stylesheets
-  const stylesheets = await page.evaluate(() => {
+  // Check for loaded stylesheets (safely)
+  const stylesheetInfo = await page.evaluate(() => {
     const sheets = Array.from(document.styleSheets);
-    return sheets.map(s => ({ href: s.href, rules: s.cssRules?.length || 'N/A' }));
+    return sheets.map(s => {
+      let ruleCount = 'N/A';
+      try { ruleCount = s.cssRules?.length || 0; } catch(e) { ruleCount = 'cross-origin'; }
+      return { href: s.href, rules: ruleCount, disabled: s.disabled };
+    });
   });
   console.log('\n--- Stylesheets ---');
-  stylesheets.forEach(s => console.log(`  ${s.href} (${s.rules} rules)`));
+  stylesheetInfo.forEach(s => console.log(`  ${s.href} (${s.rules} rules, disabled=${s.disabled})`));
 
   // Check all loaded scripts
   const scripts = await page.evaluate(() => {
@@ -122,7 +133,23 @@ import { chromium } from 'playwright';
     failedRequests.forEach(r => console.log(`  ${r.url} - ${r.failure}`));
   }
 
-  // Check if there are any visible text elements
+  // Network requests
+  console.log('\n--- Network Requests (non-200) ---');
+  const nonOk = networkRequests.filter(r => r.status !== 200 && r.status !== 304);
+  if (nonOk.length === 0) {
+    console.log('(all requests returned 200/304)');
+  } else {
+    nonOk.forEach(r => console.log(`  [${r.status}] ${r.url}`));
+  }
+
+  // Check full HTML head for any clues
+  const headContent = await page.evaluate(() => {
+    return document.head.innerHTML.substring(0, 3000);
+  });
+  console.log('\n--- <head> content (first 3000 chars) ---');
+  console.log(headContent);
+
+  // Check for any visible text on the page
   const visibleText = await page.evaluate(() => {
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const texts = [];
@@ -140,13 +167,13 @@ import { chromium } from 'playwright';
     visibleText.forEach(t => console.log(`  "${t}"`));
   }
 
-  // Check what HTML tag is immediate child of body
+  // Check body direct children
   const bodyStructure = await page.evaluate(() => {
     const children = Array.from(document.body.children);
     return children.map(c => ({
       tag: c.tagName,
       id: c.id,
-      className: c.className?.substring?.(0, 200) || '',
+      className: (c.className && typeof c.className === 'string') ? c.className.substring(0, 200) : '',
       childCount: c.children.length,
       computedDisplay: window.getComputedStyle(c).display,
       computedVisibility: window.getComputedStyle(c).visibility,
@@ -161,6 +188,11 @@ import { chromium } from 'playwright';
     console.log(`    children: ${c.childCount}, display: ${c.computedDisplay}, visibility: ${c.computedVisibility}, opacity: ${c.computedOpacity}`);
     console.log(`    bg: ${c.computedBg}, height: ${c.computedHeight}`);
   });
+
+  // Check the full body HTML
+  const fullBodyHTML = await page.evaluate(() => document.body.outerHTML.substring(0, 5000));
+  console.log('\n--- Full body outerHTML (first 5000 chars) ---');
+  console.log(fullBodyHTML);
 
   await browser.close();
   console.log('\n--- Done ---');
